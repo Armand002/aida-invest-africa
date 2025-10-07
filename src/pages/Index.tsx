@@ -160,7 +160,7 @@ const Index = () => {
               {
                 step: "02",
                 title: "Créditez votre wallet",
-                description: "Ajoutez des fonds via CoinPayments en toute sécurité",
+                description: "Ajoutez des fonds en toute sécurité",
               },
               {
                 step: "03",
