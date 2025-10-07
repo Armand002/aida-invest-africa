@@ -14,7 +14,196 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      investment_packs: {
+        Row: {
+          amount: number
+          created_at: string | null
+          duration_weeks: number | null
+          id: string
+          name: string
+          total_return: number
+          weekly_return: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          duration_weeks?: number | null
+          id?: string
+          name: string
+          total_return: number
+          weekly_return: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          duration_weeks?: number | null
+          id?: string
+          name?: string
+          total_return?: number
+          weekly_return?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string | null
+          wallet_balance: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+          wallet_balance?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+          wallet_balance?: number | null
+        }
+        Relationships: []
+      }
+      user_investments: {
+        Row: {
+          created_at: string | null
+          current_week: number | null
+          end_date: string | null
+          id: string
+          investment_amount: number
+          pack_id: string
+          start_date: string | null
+          status: string | null
+          total_earned: number | null
+          user_id: string
+          weekly_return: number
+        }
+        Insert: {
+          created_at?: string | null
+          current_week?: number | null
+          end_date?: string | null
+          id?: string
+          investment_amount: number
+          pack_id: string
+          start_date?: string | null
+          status?: string | null
+          total_earned?: number | null
+          user_id: string
+          weekly_return: number
+        }
+        Update: {
+          created_at?: string | null
+          current_week?: number | null
+          end_date?: string | null
+          id?: string
+          investment_amount?: number
+          pack_id?: string
+          start_date?: string | null
+          status?: string | null
+          total_earned?: number | null
+          user_id?: string
+          weekly_return?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_investments_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "investment_packs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_investments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          notes: string | null
+          status: string | null
+          transaction_hash: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          transaction_hash?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          transaction_hash?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_payments: {
+        Row: {
+          amount: number
+          id: string
+          investment_id: string
+          payment_date: string | null
+          status: string | null
+          week_number: number
+        }
+        Insert: {
+          amount: number
+          id?: string
+          investment_id: string
+          payment_date?: string | null
+          status?: string | null
+          week_number: number
+        }
+        Update: {
+          amount?: number
+          id?: string
+          investment_id?: string
+          payment_date?: string | null
+          status?: string | null
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_payments_investment_id_fkey"
+            columns: ["investment_id"]
+            isOneToOne: false
+            referencedRelation: "user_investments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
