@@ -97,7 +97,7 @@ const Index = () => {
                   key={index}
                   className="bg-card/80 backdrop-blur-sm rounded-xl p-6 shadow-soft"
                 >
-                  <div className="text-3xl font-bold gradient-gold bg-clip-text text-transparent mb-1">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 text-transparent bg-clip-text drop-shadow-md mb-1">
                     {stat.value}
                   </div>
                   <div className="text-sm text-muted-foreground">{stat.label}</div>

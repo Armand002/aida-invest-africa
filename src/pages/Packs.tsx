@@ -223,7 +223,7 @@ const Packs = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-center py-6 bg-muted/50 rounded-lg">
-                    <div className="text-4xl font-bold gradient-gold bg-clip-text text-transparent">
+                    <div className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 text-transparent bg-clip-text drop-shadow-md mb-1">
                       ${Number(pack.weekly_return).toFixed(2)}
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
