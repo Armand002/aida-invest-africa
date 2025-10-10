@@ -126,10 +126,10 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            Bienvenue, {profile?.full_name || "Investisseur"}
+            Bienvenue, {profile?.full_name || "Staker"}
           </h1>
           <p className="text-muted-foreground">
-            Gérez vos investissements et suivez vos gains
+            Gérez vos positions de staking et suivez vos récompenses
           </p>
         </div>
 
@@ -156,13 +156,13 @@ const Dashboard = () => {
 
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total investi</CardTitle>
+              <CardTitle className="text-sm font-medium">Total staké</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${totalInvested.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Réparti sur {activeInvestments} investissement
+                Réparti sur {activeInvestments} position
                 {activeInvestments > 1 ? "s" : ""}
               </p>
             </CardContent>
@@ -183,7 +183,7 @@ const Dashboard = () => {
 
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Investissements actifs</CardTitle>
+              <CardTitle className="text-sm font-medium">Positions actives</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -202,7 +202,7 @@ const Dashboard = () => {
 
         <Tabs defaultValue="investments" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="investments">Mes investissements</TabsTrigger>
+            <TabsTrigger value="investments">Mes positions</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
           </TabsList>
 
@@ -212,11 +212,10 @@ const Dashboard = () => {
                 <CardContent className="py-12 text-center">
                   <TrendingUp className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">
-                    Aucun investissement actif
+                    Aucune position de staking active
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Commencez à investir dès aujourd'hui et faites croître votre
-                    capital
+                    Commencez à staker dès aujourd'hui et recevez des récompenses hebdomadaires
                   </p>
                   <Button
                     onClick={() => navigate("/packs")}
@@ -255,7 +254,7 @@ const Dashboard = () => {
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground mb-1">
-                            Investissement
+                            Montant staké
                           </p>
                           <p className="font-semibold">
                             ${Number(investment.investment_amount).toFixed(2)}
@@ -263,7 +262,7 @@ const Dashboard = () => {
                         </div>
                         <div>
                           <p className="text-muted-foreground mb-1">
-                            Gains hebdo
+                            Récompenses hebdo
                           </p>
                           <p className="font-semibold text-accent">
                             ${Number(investment.weekly_return).toFixed(2)}
@@ -271,7 +270,7 @@ const Dashboard = () => {
                         </div>
                         <div>
                           <p className="text-muted-foreground mb-1">
-                            Total gagné
+                            Total récompenses
                           </p>
                           <p className="font-semibold text-accent">
                             ${Number(investment.total_earned).toFixed(2)}

@@ -91,7 +91,7 @@ const Packs = () => {
     if (!profile || profile.wallet_balance < pack.amount) {
       toast({
         title: "Solde insuffisant",
-        description: "Veuillez créditer votre compte avant d'investir.",
+        description: "Veuillez créditer votre wallet avant de staker.",
         variant: "destructive",
       });
       return;
@@ -132,7 +132,7 @@ const Packs = () => {
 
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'investissement.",
+        description: "Une erreur est survenue lors du staking.",
         variant: "destructive",
       });
       setInvesting(null);
@@ -149,8 +149,8 @@ const Packs = () => {
     });
 
     toast({
-      title: "Investissement réussi",
-      description: `Vous avez investi $${pack.amount} dans le pack ${pack.name}`,
+      title: "Staking réussi",
+      description: `Vous avez staké $${pack.amount} dans le pack ${pack.name}`,
     });
 
     setInvesting(null);
@@ -181,11 +181,11 @@ const Packs = () => {
       <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Packs d'investissement</h1>
+          <h1 className="text-4xl font-bold mb-4">Packs de staking</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Choisissez le pack qui correspond à vos objectifs d'investissement.
-            Tous les contrats ont une durée de 48 semaines avec des retours
-            hebdomadaires garantis.
+            Choisissez le pack de staking qui correspond à vos objectifs.
+            Tous les contrats ont une durée de 48 semaines avec des récompenses
+            hebdomadaires garanties.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 bg-card px-4 py-2 rounded-full shadow-soft">
             <span className="text-sm text-muted-foreground">Votre balance:</span>
@@ -218,7 +218,7 @@ const Packs = () => {
                   </div>
                   <CardTitle className="text-2xl">Pack {pack.name}</CardTitle>
                   <CardDescription>
-                    Investissement de ${Number(pack.amount).toFixed(2)}
+                    Montant à staker: ${Number(pack.amount).toFixed(2)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -264,14 +264,14 @@ const Packs = () => {
                     {investing === pack.id ? (
                       <>
                         <Clock className="w-4 h-4 mr-2 animate-spin" />
-                        Investissement...
+                        Staking en cours...
                       </>
                     ) : !canAfford ? (
                       "Solde insuffisant"
                     ) : (
                       <>
                         <TrendingUp className="w-4 h-4 mr-2" />
-                        Investir maintenant
+                        Staker maintenant
                       </>
                     )}
                   </Button>

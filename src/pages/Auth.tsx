@@ -74,7 +74,7 @@ const Auth = () => {
     } else {
       toast({
         title: "Connexion réussie",
-        description: "Bienvenue sur AIDA",
+        description: "Bienvenue sur EasyStaking",
       });
       navigate("/dashboard");
     }
@@ -90,9 +90,9 @@ const Auth = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl gradient-gold flex items-center justify-center shadow-gold">
               <TrendingUp className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold mb-2">Bienvenue sur AIDA</h1>
+            <h1 className="text-3xl font-bold mb-2">Bienvenue sur EasyStaking</h1>
             <p className="text-muted-foreground">
-              Aide Internationale de la Diaspora Africaine
+              Votre plateforme de staking crypto sécurisée
             </p>
           </div>
 
@@ -100,7 +100,7 @@ const Auth = () => {
             <CardHeader>
               <CardTitle>Accès à votre compte</CardTitle>
               <CardDescription>
-                Connectez-vous ou créez un compte pour commencer à investir
+                Connectez-vous ou créez un compte pour commencer à staker
               </CardDescription>
             </CardHeader>
             <CardContent>

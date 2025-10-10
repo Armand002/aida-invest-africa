@@ -36,7 +36,7 @@ const Navbar = () => {
             <TrendingUp className="w-6 h-6 text-primary" />
           </div>
           <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            AIDA
+            EasyStaking
           </span>
         </div>
 

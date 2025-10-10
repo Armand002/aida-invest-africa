@@ -15,18 +15,18 @@ const Index = () => {
     },
     {
       icon: Clock,
-      title: "Gains Hebdomadaires",
-      description: "Recevez vos retours chaque semaine pendant 48 semaines",
+      title: "Récompenses Hebdomadaires",
+      description: "Recevez vos récompenses de staking chaque semaine pendant 48 semaines",
     },
     {
       icon: Award,
-      title: "ROI Attractif",
-      description: "Des rendements compétitifs sur tous nos packs d'investissement",
+      title: "APY Attractif",
+      description: "Des rendements compétitifs sur tous nos packs de staking",
     },
     {
       icon: TrendingUp,
-      title: "Capital Protégé",
-      description: "Votre capital initial est retirable à la fin du contrat",
+      title: "Cryptos Protégées",
+      description: "Vos cryptos stakées sont retirables à la fin de la période",
     },
   ];
 
@@ -57,18 +57,18 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full mb-6 shadow-soft">
               <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-              <span className="text-sm font-medium">Plateforme d'investissement sécurisée</span>
+              <span className="text-sm font-medium">Plateforme de staking crypto sécurisée</span>
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-primary-foreground">
-              AIDA
+              EasyStaking
             </h1>
             <p className="text-2xl md:text-3xl font-semibold mb-4 text-primary-foreground/90">
-              Aide Internationale de la Diaspora Africaine
+              Votre plateforme de staking crypto sécurisée
             </p>
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-              Investissez intelligemment avec des retours hebdomadaires garantis.
-              Choisissez parmi 9 packs adaptés à vos objectifs financiers.
+              Stakez vos cryptos intelligemment avec des récompenses hebdomadaires garanties.
+              Choisissez parmi 9 packs de staking adaptés à vos objectifs.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -113,10 +113,10 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Pourquoi choisir AIDA ?
+              Pourquoi choisir EasyStaking ?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Une plateforme moderne conçue pour maximiser vos rendements en toute
+              Une plateforme moderne conçue pour maximiser vos récompenses de staking en toute
               sécurité
             </p>
           </div>
@@ -165,12 +165,12 @@ const Index = () => {
               {
                 step: "03",
                 title: "Choisissez votre pack",
-                description: "Sélectionnez parmi 9 packs adaptés à votre budget",
+                description: "Sélectionnez parmi 9 packs de staking adaptés à votre budget",
               },
               {
                 step: "04",
-                title: "Recevez vos gains",
-                description: "Gains hebdomadaires automatiques pendant 48 semaines",
+                title: "Recevez vos récompenses",
+                description: "Récompenses de staking hebdomadaires automatiques pendant 48 semaines",
               },
             ].map((item, index) => (
               <div key={index} className="relative">
@@ -192,10 +192,10 @@ const Index = () => {
       <section className="py-20 gradient-hero">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-primary-foreground">
-            Prêt à commencer votre parcours d'investissement ?
+            Prêt à commencer votre parcours de staking crypto ?
           </h2>
           <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-            Rejoignez AIDA aujourd'hui et profitez de retours hebdomadaires garantis
+            Rejoignez EasyStaking aujourd'hui et profitez de récompenses hebdomadaires garanties
           </p>
           <Button
             size="lg"
@@ -209,18 +209,51 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border py-8">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg gradient-gold flex items-center justify-center shadow-gold">
-              <TrendingUp className="w-5 h-5 text-primary" />
+      <footer className="bg-card border-t border-border py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid gap-8 md:grid-cols-3 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg gradient-gold flex items-center justify-center shadow-gold">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <span className="text-xl font-bold">EasyStaking</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Plateforme de staking crypto sécurisée basée à Fordwich, Angleterre
+              </p>
             </div>
-            <span className="text-xl font-bold">AIDA</span>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Liens rapides</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="/packs" className="hover:text-primary transition-colors">Packs de staking</a></li>
+                <li><a href="/auth" className="hover:text-primary transition-colors">Connexion</a></li>
+                <li><a href="/dashboard" className="hover:text-primary transition-colors">Dashboard</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Suivez-nous</h3>
+              <div className="flex gap-4">
+                <a href="https://twitter.com/easystaking" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                </a>
+                <a href="https://t.me/easystaking" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </a>
+                <a href="https://discord.gg/easystaking" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
+                </a>
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            © 2025 AIDA - Aide Internationale de la Diaspora Africaine. Tous droits
-            réservés.
-          </p>
+          
+          <div className="text-center pt-8 border-t border-border">
+            <p className="text-sm text-muted-foreground">
+              © 2025 EasyStaking - Fordwich, Angleterre. Tous droits réservés.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
