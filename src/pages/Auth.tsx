@@ -43,14 +43,14 @@ const Auth = () => {
 
     if (error) {
       toast({
-        title: "Erreur d'inscription",
+        title: "Registration Error",
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Inscription réussie",
-        description: "Vérifiez votre email pour confirmer votre compte.",
+        title: "Registration Successful",
+        description: "Check your email to confirm your account.",
       });
     }
     setLoading(false);
@@ -67,14 +67,14 @@ const Auth = () => {
 
     if (error) {
       toast({
-        title: "Erreur de connexion",
+        title: "Login Error",
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Connexion réussie",
-        description: "Bienvenue sur EasyStaking",
+        title: "Login Successful",
+        description: "Welcome to EasyStaking",
       });
       navigate("/dashboard");
     }
@@ -90,24 +90,24 @@ const Auth = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl gradient-gold flex items-center justify-center shadow-gold">
               <TrendingUp className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold mb-2">Bienvenue sur EasyStaking</h1>
+            <h1 className="text-3xl font-bold mb-2">Welcome to EasyStaking</h1>
             <p className="text-muted-foreground">
-              Votre plateforme de staking crypto sécurisée
+              Your secure crypto staking platform
             </p>
           </div>
 
           <Card className="shadow-elegant">
             <CardHeader>
-              <CardTitle>Accès à votre compte</CardTitle>
+              <CardTitle>Account Access</CardTitle>
               <CardDescription>
-                Connectez-vous ou créez un compte pour commencer à staker
+                Sign in or create an account to start staking
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="signin" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="signin">Connexion</TabsTrigger>
-                  <TabsTrigger value="signup">Inscription</TabsTrigger>
+                  <TabsTrigger value="signin">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="signin">
@@ -119,7 +119,7 @@ const Auth = () => {
                         <Input
                           id="signin-email"
                           type="email"
-                          placeholder="vous@exemple.com"
+                          placeholder="you@example.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="pl-10"
@@ -128,7 +128,7 @@ const Auth = () => {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signin-password">Mot de passe</Label>
+                      <Label htmlFor="signin-password">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -147,7 +147,7 @@ const Auth = () => {
                       className="w-full gradient-gold text-primary font-semibold shadow-gold"
                       disabled={loading}
                     >
-                      {loading ? "Connexion..." : "Se connecter"}
+                      {loading ? "Signing in..." : "Sign In"}
                     </Button>
                   </form>
                 </TabsContent>
@@ -155,13 +155,13 @@ const Auth = () => {
                 <TabsContent value="signup">
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-name">Nom complet</Label>
+                      <Label htmlFor="signup-name">Full Name</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signup-name"
                           type="text"
-                          placeholder="Jean Dupont"
+                          placeholder="John Doe"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           className="pl-10"
@@ -176,7 +176,7 @@ const Auth = () => {
                         <Input
                           id="signup-email"
                           type="email"
-                          placeholder="vous@exemple.com"
+                          placeholder="you@example.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="pl-10"
@@ -185,7 +185,7 @@ const Auth = () => {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password">Mot de passe</Label>
+                      <Label htmlFor="signup-password">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -205,7 +205,7 @@ const Auth = () => {
                       className="w-full gradient-gold text-primary font-semibold shadow-gold"
                       disabled={loading}
                     >
-                      {loading ? "Inscription..." : "S'inscrire"}
+                      {loading ? "Signing up..." : "Sign Up"}
                     </Button>
                   </form>
                 </TabsContent>

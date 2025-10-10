@@ -113,7 +113,7 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 pt-24 flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Chargement...</p>
+            <p className="text-muted-foreground">Loading...</p>
           </div>
         </div>
       </div>
@@ -126,17 +126,17 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            Bienvenue, {profile?.full_name || "Staker"}
+            Welcome, {profile?.full_name || "Staker"}
           </h1>
           <p className="text-muted-foreground">
-            Gérez vos positions de staking et suivez vos récompenses
+            Manage your staking positions and track your rewards
           </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Balance du wallet</CardTitle>
+              <CardTitle className="text-sm font-medium">Wallet Balance</CardTitle>
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -146,23 +146,23 @@ const Dashboard = () => {
               <Button
                 size="sm"
                 className="mt-3 gradient-gold text-primary font-semibold shadow-gold"
-                onClick={() => toast({ title: "Fonction bientôt disponible" })}
+                onClick={() => toast({ title: "Feature coming soon" })}
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Créditer
+                Add Funds
               </Button>
             </CardContent>
           </Card>
 
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total staké</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Staked</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${totalInvested.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Réparti sur {activeInvestments} position
+                Across {activeInvestments} position
                 {activeInvestments > 1 ? "s" : ""}
               </p>
             </CardContent>
@@ -170,20 +170,20 @@ const Dashboard = () => {
 
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total gagné</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Earned</CardTitle>
               <Award className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-accent">${totalEarned.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Depuis le début
+                Since inception
               </p>
             </CardContent>
           </Card>
 
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Positions actives</CardTitle>
+              <CardTitle className="text-sm font-medium">Active Positions</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -194,7 +194,7 @@ const Dashboard = () => {
                 className="mt-3"
                 onClick={() => navigate("/packs")}
               >
-                Voir les packs
+                View Packs
               </Button>
             </CardContent>
           </Card>
@@ -202,7 +202,7 @@ const Dashboard = () => {
 
         <Tabs defaultValue="investments" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="investments">Mes positions</TabsTrigger>
+            <TabsTrigger value="investments">My Positions</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
           </TabsList>
 
@@ -212,16 +212,16 @@ const Dashboard = () => {
                 <CardContent className="py-12 text-center">
                   <TrendingUp className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">
-                    Aucune position de staking active
+                    No Active Staking Positions
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Commencez à staker dès aujourd'hui et recevez des récompenses hebdomadaires
+                    Start staking today and receive weekly rewards
                   </p>
                   <Button
                     onClick={() => navigate("/packs")}
                     className="gradient-gold text-primary font-semibold shadow-gold"
                   >
-                    Découvrir les packs
+                    Discover Packs
                   </Button>
                 </CardContent>
               </Card>
@@ -236,7 +236,7 @@ const Dashboard = () => {
                             Pack {investment.investment_packs.name}
                           </CardTitle>
                           <CardDescription>
-                            Semaine {investment.current_week} / 48
+                            Week {investment.current_week} / 48
                           </CardDescription>
                         </div>
                         <Badge
@@ -246,7 +246,7 @@ const Dashboard = () => {
                               : "secondary"
                           }
                         >
-                          {investment.status === "active" ? "Actif" : "Terminé"}
+                          {investment.status === "active" ? "Active" : "Completed"}
                         </Badge>
                       </div>
                     </CardHeader>
@@ -254,7 +254,7 @@ const Dashboard = () => {
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground mb-1">
-                            Montant staké
+                            Staked Amount
                           </p>
                           <p className="font-semibold">
                             ${Number(investment.investment_amount).toFixed(2)}
@@ -262,7 +262,7 @@ const Dashboard = () => {
                         </div>
                         <div>
                           <p className="text-muted-foreground mb-1">
-                            Récompenses hebdo
+                            Weekly Rewards
                           </p>
                           <p className="font-semibold text-accent">
                             ${Number(investment.weekly_return).toFixed(2)}
@@ -270,7 +270,7 @@ const Dashboard = () => {
                         </div>
                         <div>
                           <p className="text-muted-foreground mb-1">
-                            Total récompenses
+                            Total Rewards
                           </p>
                           <p className="font-semibold text-accent">
                             ${Number(investment.total_earned).toFixed(2)}
@@ -297,10 +297,10 @@ const Dashboard = () => {
               <CardContent className="py-12 text-center">
                 <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-lg font-semibold mb-2">
-                  Historique des transactions
+                  Transaction History
                 </h3>
                 <p className="text-muted-foreground">
-                  Bientôt disponible
+                  Coming soon
                 </p>
               </CardContent>
             </Card>

@@ -90,8 +90,8 @@ const Packs = () => {
 
     if (!profile || profile.wallet_balance < pack.amount) {
       toast({
-        title: "Solde insuffisant",
-        description: "Veuillez créditer votre wallet avant de staker.",
+        title: "Insufficient Balance",
+        description: "Please add funds to your wallet before staking.",
         variant: "destructive",
       });
       return;
@@ -107,8 +107,8 @@ const Packs = () => {
 
     if (updateError) {
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la transaction.",
+        title: "Error",
+        description: "An error occurred during the transaction.",
         variant: "destructive",
       });
       setInvesting(null);
@@ -131,8 +131,8 @@ const Packs = () => {
         .eq("id", user.id);
 
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors du staking.",
+        title: "Error",
+        description: "An error occurred during staking.",
         variant: "destructive",
       });
       setInvesting(null);
@@ -145,12 +145,12 @@ const Packs = () => {
       type: "investment",
       amount: pack.amount,
       status: "completed",
-      notes: `Investissement dans le pack ${pack.name}`,
+      notes: `Staking in ${pack.name} pack`,
     });
 
     toast({
-      title: "Staking réussi",
-      description: `Vous avez staké $${pack.amount} dans le pack ${pack.name}`,
+      title: "Staking Successful",
+      description: `You have staked $${pack.amount} in ${pack.name} pack`,
     });
 
     setInvesting(null);
@@ -169,7 +169,7 @@ const Packs = () => {
         <div className="container mx-auto px-4 pt-24 flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Chargement...</p>
+            <p className="text-muted-foreground">Loading...</p>
           </div>
         </div>
       </div>
@@ -181,14 +181,14 @@ const Packs = () => {
       <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Packs de staking</h1>
+          <h1 className="text-4xl font-bold mb-4">Staking Packs</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Choisissez le pack de staking qui correspond à vos objectifs.
-            Tous les contrats ont une durée de 48 semaines avec des récompenses
-            hebdomadaires garanties.
+            Choose the staking pack that matches your goals.
+            All contracts have a 48-week duration with guaranteed
+            weekly rewards.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 bg-card px-4 py-2 rounded-full shadow-soft">
-            <span className="text-sm text-muted-foreground">Votre balance:</span>
+            <span className="text-sm text-muted-foreground">Your balance:</span>
             <span className="text-lg font-bold">
               ${Number(profile?.wallet_balance || 0).toFixed(2)}
             </span>
@@ -212,13 +212,13 @@ const Packs = () => {
                     <Badge variant="outline">{getPackTier(index)}</Badge>
                     {index === 4 && (
                       <Badge className="gradient-gold text-primary">
-                        Populaire
+                        Popular
                       </Badge>
                     )}
                   </div>
                   <CardTitle className="text-2xl">Pack {pack.name}</CardTitle>
                   <CardDescription>
-                    Montant à staker: ${Number(pack.amount).toFixed(2)}
+                    Amount to stake: ${Number(pack.amount).toFixed(2)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -227,19 +227,19 @@ const Packs = () => {
                       ${Number(pack.weekly_return).toFixed(2)}
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      par semaine
+                      per week
                     </p>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-accent" />
-                      <span>Durée: {pack.duration_weeks} semaines</span>
+                      <span>Duration: {pack.duration_weeks} weeks</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-accent" />
                       <span>
-                        Retour total: ${Number(pack.total_return).toFixed(2)}
+                        Total return: ${Number(pack.total_return).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
@@ -248,7 +248,7 @@ const Packs = () => {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-accent" />
-                      <span>Capital retirable à la fin</span>
+                      <span>Crypto withdrawable at the end</span>
                     </div>
                   </div>
 
@@ -264,14 +264,14 @@ const Packs = () => {
                     {investing === pack.id ? (
                       <>
                         <Clock className="w-4 h-4 mr-2 animate-spin" />
-                        Staking en cours...
+                        Staking...
                       </>
                     ) : !canAfford ? (
-                      "Solde insuffisant"
+                      "Insufficient Balance"
                     ) : (
                       <>
                         <TrendingUp className="w-4 h-4 mr-2" />
-                        Staker maintenant
+                        Stake Now
                       </>
                     )}
                   </Button>

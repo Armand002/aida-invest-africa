@@ -57,19 +57,19 @@ const Navbar = () => {
                 className="flex items-center gap-2"
               >
                 <LogOut className="w-4 h-4" />
-                Se déconnecter
+                Sign Out
               </Button>
             </>
           ) : (
             <>
               <Button variant="ghost" onClick={() => navigate("/auth")}>
-                Connexion
+                Login
               </Button>
               <Button
                 onClick={() => navigate("/auth")}
                 className="gradient-gold text-primary font-semibold hover:opacity-90 transition-opacity shadow-gold"
               >
-                Commencer
+                Get Started
               </Button>
             </>
           )}
