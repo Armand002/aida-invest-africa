@@ -17,6 +17,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [referralCode, setReferralCode] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -30,16 +31,25 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
+          referral_code: referralCode || null,
         },
         emailRedirectTo: `${window.location.origin}/`,
       },
     });
+
+    // Mettre à jour le profil avec le code de parrainage si fourni
+    if (!error && authData.user && referralCode) {
+      await supabase
+        .from("profiles")
+        .update({ referred_by: referralCode })
+        .eq("id", authData.user.id);
+    }
 
     if (error) {
       toast({
@@ -199,6 +209,17 @@ const Auth = () => {
                           minLength={6}
                         />
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-referral">Referral Code (Optional)</Label>
+                      <Input
+                        id="signup-referral"
+                        type="text"
+                        placeholder="Enter referral code"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                        maxLength={8}
+                      />
                     </div>
                     <Button
                       type="submit"

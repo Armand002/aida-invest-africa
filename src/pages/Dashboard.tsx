@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, Clock, Award, Plus, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Wallet, TrendingUp, Clock, Award, Plus, ArrowUpRight, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,20 @@ import { Badge } from "@/components/ui/badge";
 interface Profile {
   wallet_balance: number;
   full_name: string;
+  referral_code: string;
+  referral_level: number;
+  total_referral_volume: number;
+}
+
+interface ReferralCommission {
+  id: string;
+  amount: number;
+  percentage: number;
+  created_at: string;
+  profiles: {
+    full_name: string;
+    email: string;
+  };
 }
 
 interface Investment {
@@ -31,6 +45,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [investments, setInvestments] = useState<Investment[]>([]);
+  const [referralCommissions, setReferralCommissions] = useState<ReferralCommission[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +61,7 @@ const Dashboard = () => {
 
       await fetchProfile();
       await fetchInvestments();
+      await fetchReferralCommissions();
       setLoading(false);
     };
 
@@ -60,7 +76,7 @@ const Dashboard = () => {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("wallet_balance, full_name")
+      .select("wallet_balance, full_name, referral_code, referral_level, total_referral_volume")
       .eq("id", user.id)
       .single();
 
@@ -101,6 +117,51 @@ const Dashboard = () => {
 
     setInvestments(data || []);
   };
+
+  const fetchReferralCommissions = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("referral_commissions")
+      .select(`
+        id,
+        amount,
+        percentage,
+        created_at,
+        referred_id,
+        profiles!referral_commissions_referred_id_fkey (
+          full_name,
+          email
+        )
+      `)
+      .eq("referrer_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching commissions:", error);
+      return;
+    }
+
+    setReferralCommissions(data || []);
+  };
+
+  const copyReferralCode = () => {
+    if (profile?.referral_code) {
+      navigator.clipboard.writeText(profile.referral_code);
+      toast({
+        title: "Code copied!",
+        description: "Your referral code has been copied to clipboard",
+      });
+    }
+  };
+
+  const totalReferralEarnings = referralCommissions.reduce(
+    (sum, comm) => sum + Number(comm.amount),
+    0
+  );
 
   const totalInvested = investments.reduce((sum, inv) => sum + Number(inv.investment_amount), 0);
   const totalEarned = investments.reduce((sum, inv) => sum + Number(inv.total_earned), 0);
@@ -200,9 +261,68 @@ const Dashboard = () => {
           </Card>
         </div>
 
+        {/* Referral Section */}
+        <Card className="shadow-soft mb-8 border-accent/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-accent" />
+              Referral Program
+            </CardTitle>
+            <CardDescription>
+              Earn {profile?.referral_level || 5}% commission on every investment from your referrals
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Your Referral Code</p>
+                <div className="flex gap-2">
+                  <code className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-lg">
+                    {profile?.referral_code || "Loading..."}
+                  </code>
+                  <Button size="sm" onClick={copyReferralCode}>
+                    Copy
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Commission Rate</p>
+                <div className="text-2xl font-bold text-accent">
+                  {profile?.referral_level || 5}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {profile && profile.total_referral_volume >= 100000
+                    ? "Maximum level reached!"
+                    : profile && profile.total_referral_volume >= 10000
+                    ? `$${(100000 - profile.total_referral_volume).toFixed(0)} to 15%`
+                    : `$${(10000 - (profile?.total_referral_volume || 0)).toFixed(0)} to 10%`}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Total Earned</p>
+                <div className="text-2xl font-bold">
+                  ${totalReferralEarnings.toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  From {referralCommissions.length} referrals
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-accent/10 rounded-lg">
+              <p className="text-sm font-medium mb-2">Commission Tiers:</p>
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                <li>• 5% commission on all referral investments</li>
+                <li>• 10% when total referral volume reaches $10,000</li>
+                <li>• 15% when total referral volume reaches $100,000</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
         <Tabs defaultValue="investments" className="space-y-4">
           <TabsList>
             <TabsTrigger value="investments">My Positions</TabsTrigger>
+            <TabsTrigger value="referrals">Referral History</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
           </TabsList>
 
@@ -289,6 +409,70 @@ const Dashboard = () => {
                   </Card>
                 ))}
               </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="referrals" className="space-y-4">
+            {referralCommissions.length === 0 ? (
+              <Card className="shadow-soft">
+                <CardContent className="py-12 text-center">
+                  <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">
+                    No Referrals Yet
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    Share your referral code to start earning commissions
+                  </p>
+                  <Button
+                    onClick={copyReferralCode}
+                    className="gradient-gold text-primary font-semibold shadow-gold"
+                  >
+                    Copy Referral Code
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-soft">
+                <CardHeader>
+                  <CardTitle>Referral Commissions</CardTitle>
+                  <CardDescription>
+                    Your earnings from referral investments
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {referralCommissions.map((commission) => (
+                      <div
+                        key={commission.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium">
+                            {commission.profiles?.full_name || "User"}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {commission.profiles?.email}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(commission.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 text-green-600">
+                            <ArrowUpRight className="w-4 h-4" />
+                            <span className="font-bold">
+                              +${Number(commission.amount).toFixed(2)}
+                            </span>
+                          </div>
+                          <Badge variant="secondary" className="mt-1">
+                            {commission.percentage}% commission
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
