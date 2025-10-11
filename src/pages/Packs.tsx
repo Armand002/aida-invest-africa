@@ -187,6 +187,12 @@ const Packs = () => {
             All contracts have a 48-week duration with guaranteed
             weekly rewards.
           </p>
+          <div className="mt-4 max-w-2xl mx-auto bg-accent/10 border border-accent/20 rounded-lg p-4">
+            <p className="text-sm text-center">
+              <strong className="text-accent">Important:</strong> At the end of the 48-week period, 
+              your initial capital plus all accumulated earnings will be automatically credited to your wallet.
+            </p>
+          </div>
           <div className="mt-6 inline-flex items-center gap-2 bg-card px-4 py-2 rounded-full shadow-soft">
             <span className="text-sm text-muted-foreground">Your balance:</span>
             <span className="text-lg font-bold">
@@ -248,7 +254,7 @@ const Packs = () => {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-accent" />
-                      <span>Crypto withdrawable at the end</span>
+                      <span>Capital + earnings returned after 48 weeks</span>
                     </div>
                   </div>
 

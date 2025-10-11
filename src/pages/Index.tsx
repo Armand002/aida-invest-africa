@@ -25,8 +25,8 @@ const Index = () => {
     },
     {
       icon: TrendingUp,
-      title: "Protected Crypto",
-      description: "Your staked crypto is withdrawable at the end of the period",
+      title: "Capital Protection",
+      description: "Initial capital + all earnings automatically returned to your wallet after 48 weeks",
     },
   ];
 
@@ -194,9 +194,10 @@ const Index = () => {
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-primary-foreground">
             Ready to Start Your Crypto Staking Journey?
           </h2>
-          <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-            Join EasyStaking today and enjoy guaranteed weekly rewards
-          </p>
+            <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
+              Join EasyStaking today and enjoy guaranteed weekly rewards. 
+              Your capital + earnings are automatically returned after 48 weeks.
+            </p>
           <Button
             size="lg"
             onClick={() => navigate("/auth")}
