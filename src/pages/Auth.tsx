@@ -43,12 +43,24 @@ const Auth = () => {
       },
     });
 
-    // Mettre à jour le profil avec le code de parrainage si fourni
-    if (!error && authData.user && referralCode) {
-      await supabase
+    if (!error && authData.user) {
+      // Créer ou mettre à jour le profil avec le code de parrainage
+      const { error: profileError } = await supabase
         .from("profiles")
-        .update({ referred_by: referralCode })
-        .eq("id", authData.user.id);
+        .upsert({
+          id: authData.user.id,
+          full_name: fullName,
+          referred_by: referralCode || null,
+          email: email
+        });
+
+      if (profileError) {
+        toast({
+          title: "Profile Error",
+          description: profileError.message,
+          variant: "destructive",
+        });
+      }
     }
 
     if (error) {
@@ -63,6 +75,7 @@ const Auth = () => {
         description: "Check your email to confirm your account.",
       });
     }
+
     setLoading(false);
   };
 
@@ -88,6 +101,7 @@ const Auth = () => {
       });
       navigate("/dashboard");
     }
+
     setLoading(false);
   };
 
