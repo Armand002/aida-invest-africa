@@ -50,6 +50,10 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          referral_code: string | null
+          referral_level: number | null
+          referred_by: string | null
+          total_referral_volume: number | null
           updated_at: string | null
           wallet_balance: number | null
         }
@@ -58,6 +62,10 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          referral_code?: string | null
+          referral_level?: number | null
+          referred_by?: string | null
+          total_referral_volume?: number | null
           updated_at?: string | null
           wallet_balance?: number | null
         }
@@ -66,10 +74,66 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          referral_code?: string | null
+          referral_level?: number | null
+          referred_by?: string | null
+          total_referral_volume?: number | null
           updated_at?: string | null
           wallet_balance?: number | null
         }
         Relationships: []
+      }
+      referral_commissions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          investment_id: string | null
+          percentage: number
+          referred_id: string | null
+          referrer_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          investment_id?: string | null
+          percentage: number
+          referred_id?: string | null
+          referrer_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          investment_id?: string | null
+          percentage?: number
+          referred_id?: string | null
+          referrer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_commissions_investment_id_fkey"
+            columns: ["investment_id"]
+            isOneToOne: false
+            referencedRelation: "user_investments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_commissions_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_commissions_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_investments: {
         Row: {
@@ -209,7 +273,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_referral_percentage: {
+        Args: { total_volume: number }
+        Returns: number
+      }
+      generate_referral_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
