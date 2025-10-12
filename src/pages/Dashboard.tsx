@@ -28,6 +28,14 @@ interface ReferralCommission {
   };
 }
 
+interface Referral {
+  id: string;
+  full_name: string;
+  email: string;
+  created_at: string;
+  total_invested: number;
+}
+
 interface Investment {
   id: string;
   investment_amount: number;
@@ -46,6 +54,7 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [referralCommissions, setReferralCommissions] = useState<ReferralCommission[]>([]);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,6 +71,7 @@ const Dashboard = () => {
       await fetchProfile();
       await fetchInvestments();
       await fetchReferralCommissions();
+      await fetchReferrals();
       setLoading(false);
     };
 
@@ -146,6 +156,58 @@ const Dashboard = () => {
     }
 
     setReferralCommissions(data || []);
+  };
+
+  const fetchReferrals = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Get current user's referral code
+    const { data: currentProfile } = await supabase
+      .from("profiles")
+      .select("referral_code")
+      .eq("id", user.id)
+      .single();
+
+    if (!currentProfile?.referral_code) return;
+
+    // Get all referred users
+    const { data: referredUsers, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, created_at")
+      .eq("referred_by", currentProfile.referral_code);
+
+    if (error) {
+      console.error("Error fetching referrals:", error);
+      return;
+    }
+
+    // For each referred user, get their total invested amount
+    const referralsWithInvestments = await Promise.all(
+      (referredUsers || []).map(async (referredUser) => {
+        const { data: investments } = await supabase
+          .from("user_investments")
+          .select("investment_amount")
+          .eq("user_id", referredUser.id);
+
+        const totalInvested = investments?.reduce(
+          (sum, inv) => sum + Number(inv.investment_amount),
+          0
+        ) || 0;
+
+        return {
+          id: referredUser.id,
+          full_name: referredUser.full_name || "N/A",
+          email: referredUser.email,
+          created_at: referredUser.created_at,
+          total_invested: totalInvested,
+        };
+      })
+    );
+
+    setReferrals(referralsWithInvestments);
   };
 
   const copyReferralCode = () => {
@@ -322,7 +384,8 @@ const Dashboard = () => {
         <Tabs defaultValue="investments" className="space-y-4">
           <TabsList>
             <TabsTrigger value="investments">My Positions</TabsTrigger>
-            <TabsTrigger value="referrals">Referral History</TabsTrigger>
+            <TabsTrigger value="my-referrals">My Referrals</TabsTrigger>
+            <TabsTrigger value="referrals">Commission History</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
           </TabsList>
 
@@ -412,8 +475,8 @@ const Dashboard = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="referrals" className="space-y-4">
-            {referralCommissions.length === 0 ? (
+          <TabsContent value="my-referrals" className="space-y-4">
+            {referrals.length === 0 ? (
               <Card className="shadow-soft">
                 <CardContent className="py-12 text-center">
                   <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -421,7 +484,66 @@ const Dashboard = () => {
                     No Referrals Yet
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Share your referral code to start earning commissions
+                    Share your referral code to start building your network
+                  </p>
+                  <Button
+                    onClick={copyReferralCode}
+                    className="gradient-gold text-primary font-semibold shadow-gold"
+                  >
+                    Copy Referral Code
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-soft">
+                <CardHeader>
+                  <CardTitle>My Referrals ({referrals.length})</CardTitle>
+                  <CardDescription>
+                    People who joined using your referral code
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {referrals.map((referral) => (
+                      <div
+                        key={referral.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium">{referral.full_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {referral.email}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Joined: {new Date(referral.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground mb-1">
+                            Total Invested
+                          </p>
+                          <p className="text-lg font-bold">
+                            ${referral.total_invested.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="referrals" className="space-y-4">
+            {referralCommissions.length === 0 ? (
+              <Card className="shadow-soft">
+                <CardContent className="py-12 text-center">
+                  <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">
+                    No Commissions Yet
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    You'll earn commissions when your referrals invest
                   </p>
                   <Button
                     onClick={copyReferralCode}
