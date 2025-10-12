@@ -281,6 +281,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      is_referral_of: {
+        Args: { candidate_id: string; viewer_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
