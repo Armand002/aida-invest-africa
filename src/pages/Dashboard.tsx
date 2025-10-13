@@ -2,9 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, Clock, Award, Plus, ArrowUpRight, Copy } from "lucide-react";
+import {
+  Wallet, TrendingUp, Clock, Award, Plus, ArrowUpRight
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +52,16 @@ interface Investment {
   };
 }
 
+interface Transaction {
+  id: string;
+  user_id: string;
+  type: string;
+  amount: number;
+  currency: string;
+  metadata: any;
+  created_at: string;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -55,59 +69,45 @@ const Dashboard = () => {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [referralCommissions, setReferralCommissions] = useState<ReferralCommission[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
         return;
       }
-
       await fetchProfile();
       await fetchInvestments();
       await fetchReferralCommissions();
       await fetchReferrals();
+      await fetchTransactions();
       setLoading(false);
     };
-
     checkAuth();
   }, [navigate]);
 
+  // -------------------- Fetchers --------------------
   const fetchProfile = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
     const { data, error } = await supabase
       .from("profiles")
       .select("wallet_balance, full_name, referral_code, referral_level, total_referral_volume")
       .eq("id", user.id)
       .single();
-
-    if (error) {
-      console.error("Error fetching profile:", error);
-      return;
-    }
-
-    setProfile(data);
+    if (error) console.error("Error fetching profile:", error);
+    else setProfile(data);
   };
 
   const fetchInvestments = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
     const { data, error } = await supabase
       .from("user_investments")
-      .select(
-        `
+      .select(`
         id,
         investment_amount,
         weekly_return,
@@ -115,25 +115,16 @@ const Dashboard = () => {
         current_week,
         status,
         investment_packs (name)
-      `
-      )
+      `)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching investments:", error);
-      return;
-    }
-
-    setInvestments(data || []);
+    if (error) console.error("Error fetching investments:", error);
+    else setInvestments(data || []);
   };
 
   const fetchReferralCommissions = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
     const { data, error } = await supabase
       .from("referral_commissions")
       .select(`
@@ -149,67 +140,86 @@ const Dashboard = () => {
       `)
       .eq("referrer_id", user.id)
       .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching commissions:", error);
-      return;
-    }
-
-    setReferralCommissions(data || []);
+    if (error) console.error("Error fetching commissions:", error);
+    else setReferralCommissions(data || []);
   };
 
   const fetchReferrals = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
-    // Get current user's referral code
     const { data: currentProfile } = await supabase
       .from("profiles")
       .select("referral_code")
       .eq("id", user.id)
       .single();
-
     if (!currentProfile?.referral_code) return;
-
-    // Get all referred users
     const { data: referredUsers, error } = await supabase
       .from("profiles")
       .select("id, full_name, email, created_at")
       .eq("referred_by", currentProfile.referral_code);
-
-    if (error) {
-      console.error("Error fetching referrals:", error);
-      return;
+    if (error) console.error("Error fetching referrals:", error);
+    else {
+      const referralsWithInvestments = await Promise.all(
+        (referredUsers || []).map(async (refUser) => {
+          const { data: investments } = await supabase
+            .from("user_investments")
+            .select("investment_amount")
+            .eq("user_id", refUser.id);
+          const totalInvested = investments?.reduce(
+            (sum, inv) => sum + Number(inv.investment_amount),
+            0
+          ) || 0;
+          return { ...refUser, total_invested: totalInvested };
+        })
+      );
+      setReferrals(referralsWithInvestments);
     }
-
-    // For each referred user, get their total invested amount
-    const referralsWithInvestments = await Promise.all(
-      (referredUsers || []).map(async (referredUser) => {
-        const { data: investments } = await supabase
-          .from("user_investments")
-          .select("investment_amount")
-          .eq("user_id", referredUser.id);
-
-        const totalInvested = investments?.reduce(
-          (sum, inv) => sum + Number(inv.investment_amount),
-          0
-        ) || 0;
-
-        return {
-          id: referredUser.id,
-          full_name: referredUser.full_name || "N/A",
-          email: referredUser.email,
-          created_at: referredUser.created_at,
-          total_invested: totalInvested,
-        };
-      })
-    );
-
-    setReferrals(referralsWithInvestments);
   };
 
+  const fetchTransactions = async () => {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) setTransactions(data);
+  };
+
+  // -------------------- Realtime Updates --------------------
+  useEffect(() => {
+    const setupRealtime = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Wallet realtime
+      const profileSub = supabase
+        .channel(`realtime-profile-${user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+          (payload) => setProfile((prev) => prev ? { ...prev, wallet_balance: payload.new.wallet_balance } : prev)
+        )
+        .subscribe();
+
+      // Transactions realtime
+      const txSub = supabase
+        .channel(`realtime-transactions-${user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "transactions", filter: `user_id=eq.${user.id}` },
+          (payload) => setTransactions((prev) => [payload.new, ...prev])
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(profileSub);
+        supabase.removeChannel(txSub);
+      };
+    };
+
+    setupRealtime();
+  }, []);
+
+  // -------------------- Utils --------------------
   const copyReferralCode = () => {
     if (profile?.referral_code) {
       navigator.clipboard.writeText(profile.referral_code);
@@ -220,11 +230,7 @@ const Dashboard = () => {
     }
   };
 
-  const totalReferralEarnings = referralCommissions.reduce(
-    (sum, comm) => sum + Number(comm.amount),
-    0
-  );
-
+  const totalReferralEarnings = referralCommissions.reduce((sum, comm) => sum + Number(comm.amount), 0);
   const totalInvested = investments.reduce((sum, inv) => sum + Number(inv.investment_amount), 0);
   const totalEarned = investments.reduce((sum, inv) => sum + Number(inv.total_earned), 0);
   const activeInvestments = investments.filter((inv) => inv.status === "active").length;
@@ -247,13 +253,12 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
+        {/* -------------------- Wallet & Stats -------------------- */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
             Welcome, {profile?.full_name || "Staker"}
           </h1>
-          <p className="text-muted-foreground">
-            Manage your staking positions and track your rewards
-          </p>
+          <p className="text-muted-foreground">Manage your staking positions and track your rewards</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -263,16 +268,13 @@ const Dashboard = () => {
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                ${Number(profile?.wallet_balance || 0).toFixed(2)}
-              </div>
+              <div className="text-2xl font-bold">${Number(profile?.wallet_balance || 0).toFixed(2)}</div>
               <Button
                 size="sm"
                 className="mt-3 gradient-gold text-primary font-semibold shadow-gold"
-                onClick={() => toast({ title: "Feature coming soon" })}
+                onClick={() => navigate("/deposit")}
               >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Funds
+                <Plus className="w-4 h-4 mr-1" /> Add Funds
               </Button>
             </CardContent>
           </Card>
@@ -285,8 +287,7 @@ const Dashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">${totalInvested.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Across {activeInvestments} position
-                {activeInvestments > 1 ? "s" : ""}
+                Across {activeInvestments} position{activeInvestments > 1 ? "s" : ""}
               </p>
             </CardContent>
           </Card>
@@ -298,9 +299,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-accent">${totalEarned.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Since inception
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Since inception</p>
             </CardContent>
           </Card>
 
@@ -323,12 +322,11 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Referral Section */}
+        {/* -------------------- Referral Program -------------------- */}
         <Card className="shadow-soft mb-8 border-accent/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-accent" />
-              Referral Program
+              <Award className="w-5 h-5 text-accent" /> Referral Program
             </CardTitle>
             <CardDescription>
               Earn {profile?.referral_level || 5}% commission on every investment from your referrals
@@ -342,9 +340,7 @@ const Dashboard = () => {
                   <code className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-lg">
                     {profile?.referral_code || "Loading..."}
                   </code>
-                  <Button size="sm" onClick={copyReferralCode}>
-                    Copy
-                  </Button>
+                  <Button size="sm" onClick={copyReferralCode}>Copy</Button>
                 </div>
               </div>
               <div className="space-y-2">
@@ -352,35 +348,17 @@ const Dashboard = () => {
                 <div className="text-2xl font-bold text-accent">
                   {profile?.referral_level || 5}%
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {profile && profile.total_referral_volume >= 100000
-                    ? "Maximum level reached!"
-                    : profile && profile.total_referral_volume >= 10000
-                    ? `$${(100000 - profile.total_referral_volume).toFixed(0)} to 15%`
-                    : `$${(10000 - (profile?.total_referral_volume || 0)).toFixed(0)} to 10%`}
-                </p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Total Earned</p>
-                <div className="text-2xl font-bold">
-                  ${totalReferralEarnings.toFixed(2)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  From {referralCommissions.length} referrals
-                </p>
+                <div className="text-2xl font-bold">${totalReferralEarnings.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground">From {referralCommissions.length} referrals</p>
               </div>
-            </div>
-            <div className="mt-4 p-4 bg-accent/10 rounded-lg">
-              <p className="text-sm font-medium mb-2">Commission Tiers:</p>
-              <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• 5% commission on all referral investments</li>
-                <li>• 10% when total referral volume reaches $10,000</li>
-                <li>• 15% when total referral volume reaches $100,000</li>
-              </ul>
             </div>
           </CardContent>
         </Card>
 
+        {/* -------------------- Tabs -------------------- */}
         <Tabs defaultValue="investments" className="space-y-4">
           <TabsList>
             <TabsTrigger value="investments">My Positions</TabsTrigger>
@@ -389,84 +367,52 @@ const Dashboard = () => {
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
           </TabsList>
 
+          {/* Investments */}
           <TabsContent value="investments" className="space-y-4">
             {investments.length === 0 ? (
               <Card className="shadow-soft">
                 <CardContent className="py-12 text-center">
                   <TrendingUp className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    No Active Staking Positions
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    Start staking today and receive weekly rewards
-                  </p>
-                  <Button
-                    onClick={() => navigate("/packs")}
-                    className="gradient-gold text-primary font-semibold shadow-gold"
-                  >
+                  <h3 className="text-lg font-semibold mb-2">No Active Staking Positions</h3>
+                  <p className="text-muted-foreground mb-4">Start staking today and receive weekly rewards</p>
+                  <Button onClick={() => navigate("/packs")} className="gradient-gold text-primary font-semibold shadow-gold">
                     Discover Packs
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid gap-4">
-                {investments.map((investment) => (
-                  <Card key={investment.id} className="shadow-soft">
+                {investments.map((inv) => (
+                  <Card key={inv.id} className="shadow-soft">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div>
-                          <CardTitle className="text-lg">
-                            Pack {investment.investment_packs.name}
-                          </CardTitle>
-                          <CardDescription>
-                            Week {investment.current_week} / 48
-                          </CardDescription>
+                          <CardTitle className="text-lg">Pack {inv.investment_packs.name}</CardTitle>
+                          <CardDescription>Week {inv.current_week} / 48</CardDescription>
                         </div>
-                        <Badge
-                          variant={
-                            investment.status === "active"
-                              ? "default"
-                              : "secondary"
-                          }
-                        >
-                          {investment.status === "active" ? "Active" : "Completed"}
+                        <Badge variant={inv.status === "active" ? "default" : "secondary"}>
+                          {inv.status === "active" ? "Active" : "Completed"}
                         </Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
-                          <p className="text-muted-foreground mb-1">
-                            Staked Amount
-                          </p>
-                          <p className="font-semibold">
-                            ${Number(investment.investment_amount).toFixed(2)}
-                          </p>
+                          <p className="text-muted-foreground mb-1">Staked Amount</p>
+                          <p className="font-semibold">${Number(inv.investment_amount).toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground mb-1">
-                            Weekly Rewards
-                          </p>
-                          <p className="font-semibold text-accent">
-                            ${Number(investment.weekly_return).toFixed(2)}
-                          </p>
+                          <p className="text-muted-foreground mb-1">Weekly Rewards</p>
+                          <p className="font-semibold text-accent">${Number(inv.weekly_return).toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground mb-1">
-                            Total Rewards
-                          </p>
-                          <p className="font-semibold text-accent">
-                            ${Number(investment.total_earned).toFixed(2)}
-                          </p>
+                          <p className="text-muted-foreground mb-1">Total Rewards</p>
+                          <p className="font-semibold text-accent">${Number(inv.total_earned).toFixed(2)}</p>
                         </div>
                       </div>
                       <div className="mt-4 bg-muted rounded-full h-2 overflow-hidden">
-                        <div
-                          className="h-full gradient-gold transition-all duration-500"
-                          style={{
-                            width: `${(investment.current_week / 48) * 100}%`,
-                          }}
-                        />
+                        <div className="h-full gradient-gold transition-all duration-500"
+                          style={{ width: `${(inv.current_week / 48) * 100}%` }} />
                       </div>
                     </CardContent>
                   </Card>
@@ -475,141 +421,113 @@ const Dashboard = () => {
             )}
           </TabsContent>
 
+          {/* My Referrals */}
           <TabsContent value="my-referrals" className="space-y-4">
             {referrals.length === 0 ? (
               <Card className="shadow-soft">
                 <CardContent className="py-12 text-center">
                   <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    No Referrals Yet
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    Share your referral code to start building your network
-                  </p>
-                  <Button
-                    onClick={copyReferralCode}
-                    className="gradient-gold text-primary font-semibold shadow-gold"
-                  >
+                  <h3 className="text-lg font-semibold mb-2">No Referrals Yet</h3>
+                  <p className="text-muted-foreground mb-4">Share your referral code to start building your network</p>
+                  <Button onClick={copyReferralCode} className="gradient-gold text-primary font-semibold shadow-gold">
                     Copy Referral Code
                   </Button>
                 </CardContent>
               </Card>
             ) : (
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <CardTitle>My Referrals ({referrals.length})</CardTitle>
-                  <CardDescription>
-                    People who joined using your referral code
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {referrals.map((referral) => (
-                      <div
-                        key={referral.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium">{referral.full_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {referral.email}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Joined: {new Date(referral.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-muted-foreground mb-1">
-                            Total Invested
-                          </p>
-                          <p className="text-lg font-bold">
-                            ${referral.total_invested.toFixed(2)}
-                          </p>
-                        </div>
+              <div className="space-y-4">
+                {referrals.map((ref) => (
+                  <Card key={ref.id} className="shadow-soft">
+                    <CardContent className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{ref.full_name}</p>
+                        <p className="text-sm text-muted-foreground">{ref.email}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Joined: {new Date(ref.created_at).toLocaleDateString()}</p>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground mb-1">Total Invested</p>
+                        <p className="text-lg font-bold">${ref.total_invested.toFixed(2)}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </TabsContent>
 
+          {/* Referral Commissions */}
           <TabsContent value="referrals" className="space-y-4">
             {referralCommissions.length === 0 ? (
               <Card className="shadow-soft">
                 <CardContent className="py-12 text-center">
                   <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    No Commissions Yet
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    You'll earn commissions when your referrals invest
-                  </p>
-                  <Button
-                    onClick={copyReferralCode}
-                    className="gradient-gold text-primary font-semibold shadow-gold"
-                  >
+                  <h3 className="text-lg font-semibold mb-2">No Commissions Yet</h3>
+                  <p className="text-muted-foreground mb-4">You'll earn commissions when your referrals invest</p>
+                  <Button onClick={copyReferralCode} className="gradient-gold text-primary font-semibold shadow-gold">
                     Copy Referral Code
                   </Button>
                 </CardContent>
               </Card>
             ) : (
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <CardTitle>Referral Commissions</CardTitle>
-                  <CardDescription>
-                    Your earnings from referral investments
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {referralCommissions.map((commission) => (
-                      <div
-                        key={commission.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium">
-                            {commission.profiles?.full_name || "User"}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {commission.profiles?.email}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(commission.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-2 text-green-600">
-                            <ArrowUpRight className="w-4 h-4" />
-                            <span className="font-bold">
-                              +${Number(commission.amount).toFixed(2)}
-                            </span>
-                          </div>
-                          <Badge variant="secondary" className="mt-1">
-                            {commission.percentage}% commission
-                          </Badge>
-                        </div>
+              <div className="space-y-4">
+                {referralCommissions.map((comm) => (
+                  <Card key={comm.id} className="shadow-soft">
+                    <CardContent className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{comm.profiles?.full_name || "User"}</p>
+                        <p className="text-sm text-muted-foreground">{comm.profiles?.email}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{new Date(comm.created_at).toLocaleDateString()}</p>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      <div className="text-right flex flex-col items-end">
+                        <div className="flex items-center gap-2 text-green-600">
+                          <ArrowUpRight className="w-4 h-4" />
+                          <span className="font-bold">+${Number(comm.amount).toFixed(2)}</span>
+                        </div>
+                        <Badge variant="secondary" className="mt-1">{comm.percentage}% commission</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </TabsContent>
 
+          {/* Transactions */}
           <TabsContent value="transactions">
-            <Card className="shadow-soft">
-              <CardContent className="py-12 text-center">
-                <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">
-                  Transaction History
-                </h3>
-                <p className="text-muted-foreground">
-                  Coming soon
-                </p>
-              </CardContent>
-            </Card>
+            {transactions.length === 0 ? (
+              <Card className="shadow-soft">
+                <CardContent className="py-12 text-center">
+                  <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">No Transactions Yet</h3>
+                  <p className="text-muted-foreground">All deposits and withdrawals will appear here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {transactions.map((tx) => (
+                  <Card key={tx.id} className="shadow-soft">
+                    <CardHeader className="flex justify-between items-center">
+                      <CardTitle className="text-sm font-medium">{tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}</CardTitle>
+                      <Badge variant={tx.type === "deposit" ? "default" : "secondary"}>{tx.type}</Badge>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground mb-1">Amount</p>
+                        <p className="font-semibold">{tx.currency.startsWith("USDT") ? "$" : ""}{tx.amount.toFixed(2)} {tx.currency}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground mb-1">Date</p>
+                        <p>{new Date(tx.created_at).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground mb-1">Transaction ID</p>
+                        <p className="font-mono text-xs">{tx.metadata?.txn_id || "-"}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
