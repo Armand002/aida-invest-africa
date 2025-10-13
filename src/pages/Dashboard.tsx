@@ -7,11 +7,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Wallet, TrendingUp, Clock, Award, Plus, ArrowUpRight
+  Wallet, TrendingUp, Clock, Award, Plus, ArrowUpRight, ArrowDownLeft
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { WithdrawalModal } from "@/components/WithdrawalModal";
 
 interface Profile {
   wallet_balance: number;
@@ -69,8 +70,9 @@ const Dashboard = () => {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [referralCommissions, setReferralCommissions] = useState<ReferralCommission[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [withdrawalOpen, setWithdrawalOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -177,9 +179,12 @@ const Dashboard = () => {
   };
 
   const fetchTransactions = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
     const { data, error } = await supabase
-      .from("transactions")
+      .from("wallet_transactions")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (!error && data) setTransactions(data);
   };
@@ -205,7 +210,7 @@ const Dashboard = () => {
         .channel(`realtime-transactions-${user.id}`)
         .on(
           "postgres_changes",
-          { event: "INSERT", schema: "public", table: "transactions", filter: `user_id=eq.${user.id}` },
+          { event: "INSERT", schema: "public", table: "wallet_transactions", filter: `user_id=eq.${user.id}` },
           (payload) => setTransactions((prev) => [payload.new, ...prev])
         )
         .subscribe();
@@ -234,6 +239,13 @@ const Dashboard = () => {
   const totalInvested = investments.reduce((sum, inv) => sum + Number(inv.investment_amount), 0);
   const totalEarned = investments.reduce((sum, inv) => sum + Number(inv.total_earned), 0);
   const activeInvestments = investments.filter((inv) => inv.status === "active").length;
+  
+  // Calculate locked balance (capital in active investments)
+  const lockedBalance = investments
+    .filter((inv) => inv.status === "active")
+    .reduce((sum, inv) => sum + Number(inv.investment_amount), 0);
+  
+  const availableBalance = Number(profile?.wallet_balance || 0);
 
   if (loading) {
     return (
@@ -268,14 +280,28 @@ const Dashboard = () => {
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${Number(profile?.wallet_balance || 0).toFixed(2)}</div>
-              <Button
-                size="sm"
-                className="mt-3 gradient-gold text-primary font-semibold shadow-gold"
-                onClick={() => navigate("/deposit")}
-              >
-                <Plus className="w-4 h-4 mr-1" /> Add Funds
-              </Button>
+              <div className="text-2xl font-bold">${availableBalance.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Locked: ${lockedBalance.toFixed(2)}
+              </p>
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  className="gradient-gold text-primary font-semibold shadow-gold flex-1"
+                  onClick={() => navigate("/deposit")}
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Deposit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setWithdrawalOpen(true)}
+                  disabled={availableBalance < 1}
+                >
+                  <ArrowDownLeft className="w-4 h-4 mr-1" /> Withdraw
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -506,22 +532,31 @@ const Dashboard = () => {
               <div className="space-y-4">
                 {transactions.map((tx) => (
                   <Card key={tx.id} className="shadow-soft">
-                    <CardHeader className="flex justify-between items-center">
-                      <CardTitle className="text-sm font-medium">{tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}</CardTitle>
-                      <Badge variant={tx.type === "deposit" ? "default" : "secondary"}>{tx.type}</Badge>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground mb-1">Amount</p>
-                        <p className="font-semibold">{tx.currency.startsWith("USDT") ? "$" : ""}{tx.amount.toFixed(2)} {tx.currency}</p>
+                    <CardContent className="py-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="font-medium">{tx.type.charAt(0).toUpperCase() + tx.type.slice(1).replace("_", " ")}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(tx.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <Badge variant={tx.status === "completed" ? "default" : "secondary"}>
+                          {tx.status}
+                        </Badge>
                       </div>
-                      <div>
-                        <p className="text-muted-foreground mb-1">Date</p>
-                        <p>{new Date(tx.created_at).toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground mb-1">Transaction ID</p>
-                        <p className="font-mono text-xs">{tx.metadata?.txn_id || "-"}</p>
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Amount</p>
+                          <p className="text-lg font-bold">
+                            {tx.type === "deposit" || tx.type === "referral_commission" || tx.type === "payout" ? "+" : "-"}
+                            ${Number(tx.amount).toFixed(2)}
+                          </p>
+                        </div>
+                        {tx.notes && (
+                          <p className="text-xs text-muted-foreground max-w-xs text-right">
+                            {tx.notes}
+                          </p>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -531,6 +566,17 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <WithdrawalModal
+        open={withdrawalOpen}
+        onOpenChange={setWithdrawalOpen}
+        availableBalance={availableBalance}
+        lockedBalance={lockedBalance}
+        onSuccess={() => {
+          fetchProfile();
+          fetchTransactions();
+        }}
+      />
     </div>
   );
 };
