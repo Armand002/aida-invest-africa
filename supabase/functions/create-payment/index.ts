@@ -32,17 +32,22 @@ serve(async (req) => {
     const ipnUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/coinpayments-ipn`;
 
     // Create transaction with CoinPayments API
+    // Format USDT currency code based on network
+    let currency2 = currency;
+    if (currency === 'USDT' && network) {
+      currency2 = `USDT.${network}`;
+    }
+
     const params = {
       version: '1',
       cmd: 'create_transaction',
       key: publicKey,
       amount: amount.toString(),
       currency1: 'USD',
-      currency2: currency,
+      currency2: currency2,
       buyer_email: user_email,
       ipn_url: ipnUrl,
       custom: user_id, // Store user_id for callback
-      ...(currency === 'USDT' && network ? { network } : {}),
     };
 
     // Create HMAC signature
