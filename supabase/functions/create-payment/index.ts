@@ -33,6 +33,7 @@ serve(async (req) => {
 
     // Create transaction with CoinPayments API
     const params = {
+      version: '1',
       cmd: 'create_transaction',
       amount: amount.toString(),
       currency1: 'USD',
