@@ -35,6 +35,7 @@ serve(async (req) => {
     const params = {
       version: '1',
       cmd: 'create_transaction',
+      key: publicKey,
       amount: amount.toString(),
       currency1: 'USD',
       currency2: currency,
