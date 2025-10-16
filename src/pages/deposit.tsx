@@ -47,6 +47,14 @@ export default function Deposit() {
     setLoading(true);
 
     try {
+      const bodyPayload = {
+        amount,
+        currency,
+        user_id: user.id,
+        user_email: user.email,
+        ...(currency === "USDT" ? { network } : {}), // Network uniquement pour USDT
+      };
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-payment`,
         {
@@ -55,13 +63,7 @@ export default function Deposit() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({
-            amount,
-            currency,
-            network,
-            user_id: user.id,
-            user_email: user.email,
-          }),
+          body: JSON.stringify(bodyPayload),
         }
       );
 
@@ -112,9 +114,12 @@ export default function Deposit() {
         <option value="USDT">Tether (USDT)</option>
         <option value="BTC">Bitcoin (BTC)</option>
         <option value="ETH">Ethereum (ETH)</option>
+        <option value="LTC">Litecoin (LTC)</option>
+        <option value="LTCT">Litecoin Testnet2 (LTCT)</option>
+        <option value="BNB">Binance Coin (BNB)</option>
       </select>
 
-      {/* Réseaux pour USDT */}
+      {/* Réseaux pour USDT uniquement */}
       {currency === "USDT" && (
         <>
           <label className="block mb-2">Réseau</label>
