@@ -20,6 +20,7 @@ interface Profile {
   referral_code: string;
   referral_level: number;
   total_referral_volume: number;
+  released_capital: number;
 }
 
 interface ReferralCommission {
@@ -97,7 +98,7 @@ const Dashboard = () => {
     if (!user) return;
     const { data, error } = await supabase
       .from("profiles")
-      .select("wallet_balance, full_name, referral_code, referral_level, total_referral_volume")
+      .select("wallet_balance, full_name, referral_code, referral_level, total_referral_volume, released_capital")
       .eq("id", user.id)
       .single();
     if (error) console.error("Error fetching profile:", error);
@@ -246,9 +247,10 @@ const Dashboard = () => {
     .reduce((sum, inv) => sum + Number(inv.investment_amount), 0);
   
   const availableBalance = Number(profile?.wallet_balance || 0);
+  const releasedCapital = Number(profile?.released_capital || 0);
   
-  // Withdrawable balance = total earned + referral commissions
-  const withdrawableBalance = totalEarned + totalReferralEarnings;
+  // Withdrawable balance = total earned + referral commissions + released capital
+  const withdrawableBalance = totalEarned + totalReferralEarnings + releasedCapital;
 
   if (loading) {
     return (
@@ -320,12 +322,15 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 Commissions: ${totalReferralEarnings.toFixed(2)}
               </p>
+              <p className="text-xs text-muted-foreground">
+                Released Capital: ${releasedCapital.toFixed(2)}
+              </p>
               <Button
                 size="sm"
                 variant="outline"
                 className="mt-3 w-full"
                 onClick={() => setWithdrawalOpen(true)}
-                disabled={(totalEarned + totalReferralEarnings) < 1}
+                disabled={withdrawableBalance < 1}
               >
                 <ArrowDownLeft className="w-4 h-4 mr-1" /> Withdraw
               </Button>

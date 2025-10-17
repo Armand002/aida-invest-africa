@@ -44,6 +44,56 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          amount_original: number | null
+          checkout_url: string | null
+          created_at: string | null
+          currency: string
+          id: string
+          ipn_payload: Json | null
+          status: string
+          txid: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          amount_original?: number | null
+          checkout_url?: string | null
+          created_at?: string | null
+          currency: string
+          id?: string
+          ipn_payload?: Json | null
+          status?: string
+          txid?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          amount_original?: number | null
+          checkout_url?: string | null
+          created_at?: string | null
+          currency?: string
+          id?: string
+          ipn_payload?: Json | null
+          status?: string
+          txid?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -53,6 +103,7 @@ export type Database = {
           referral_code: string | null
           referral_level: number | null
           referred_by: string | null
+          released_capital: number | null
           total_referral_volume: number | null
           updated_at: string | null
           wallet_balance: number | null
@@ -65,6 +116,7 @@ export type Database = {
           referral_code?: string | null
           referral_level?: number | null
           referred_by?: string | null
+          released_capital?: number | null
           total_referral_volume?: number | null
           updated_at?: string | null
           wallet_balance?: number | null
@@ -77,6 +129,7 @@ export type Database = {
           referral_code?: string | null
           referral_level?: number | null
           referred_by?: string | null
+          released_capital?: number | null
           total_referral_volume?: number | null
           updated_at?: string | null
           wallet_balance?: number | null
@@ -129,6 +182,44 @@ export type Database = {
           {
             foreignKeyName: "referral_commissions_referrer_id_fkey"
             columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          metadata: Json | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -280,6 +371,10 @@ export type Database = {
       generate_referral_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      increment_wallet_balance: {
+        Args: { add_amount: number; user_uuid: string }
+        Returns: undefined
       }
       is_referral_of: {
         Args: { candidate_id: string; viewer_id: string }
