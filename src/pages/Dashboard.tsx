@@ -246,6 +246,9 @@ const Dashboard = () => {
     .reduce((sum, inv) => sum + Number(inv.investment_amount), 0);
   
   const availableBalance = Number(profile?.wallet_balance || 0);
+  
+  // Withdrawable balance = total earned + referral commissions
+  const withdrawableBalance = totalEarned + totalReferralEarnings;
 
   if (loading) {
     return (
@@ -284,24 +287,13 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 Locked: ${lockedBalance.toFixed(2)}
               </p>
-              <div className="flex gap-2 mt-3">
-                <Button
-                  size="sm"
-                  className="gradient-gold text-primary font-semibold shadow-gold flex-1"
-                  onClick={() => navigate("/deposit")}
-                >
-                  <Plus className="w-4 h-4 mr-1" /> Deposit
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setWithdrawalOpen(true)}
-                  disabled={availableBalance < 1}
-                >
-                  <ArrowDownLeft className="w-4 h-4 mr-1" /> Withdraw
-                </Button>
-              </div>
+              <Button
+                size="sm"
+                className="gradient-gold text-primary font-semibold shadow-gold w-full mt-3"
+                onClick={() => navigate("/deposit")}
+              >
+                <Plus className="w-4 h-4 mr-1" /> Deposit
+              </Button>
             </CardContent>
           </Card>
 
@@ -325,7 +317,18 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-accent">${totalEarned.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Since inception</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Commissions: ${totalReferralEarnings.toFixed(2)}
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-3 w-full"
+                onClick={() => setWithdrawalOpen(true)}
+                disabled={(totalEarned + totalReferralEarnings) < 1}
+              >
+                <ArrowDownLeft className="w-4 h-4 mr-1" /> Withdraw
+              </Button>
             </CardContent>
           </Card>
 
@@ -570,10 +573,12 @@ const Dashboard = () => {
       <WithdrawalModal
         open={withdrawalOpen}
         onOpenChange={setWithdrawalOpen}
-        availableBalance={availableBalance}
-        lockedBalance={lockedBalance}
+        availableBalance={withdrawableBalance}
+        lockedBalance={0}
         onSuccess={() => {
           fetchProfile();
+          fetchInvestments();
+          fetchReferralCommissions();
           fetchTransactions();
         }}
       />
