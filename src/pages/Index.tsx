@@ -152,31 +152,13 @@ const Index = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
             {[
-              {
-                step: "01",
-                title: "Create Your Account",
-                description: "Quick and secure registration in minutes",
-              },
-              {
-                step: "02",
-                title: "Fund Your Wallet",
-                description: "Add funds securely",
-              },
-              {
-                step: "03",
-                title: "Choose Your Pack",
-                description: "Select from 9 staking packs tailored to your budget",
-              },
-              {
-                step: "04",
-                title: "Receive Your Rewards",
-                description: "Automatic weekly staking rewards for 48 weeks",
-              },
+              { step: "01", title: "Create Your Account", description: "Quick and secure registration in minutes" },
+              { step: "02", title: "Fund Your Wallet", description: "Add funds securely" },
+              { step: "03", title: "Choose Your Pack", description: "Select from 9 staking packs tailored to your budget" },
+              { step: "04", title: "Receive Your Rewards", description: "Automatic weekly staking rewards for 48 weeks" },
             ].map((item, index) => (
               <div key={index} className="relative">
-                <div className="text-6xl font-bold text-muted/20 mb-4">
-                  {item.step}
-                </div>
+                <div className="text-6xl font-bold text-muted/20 mb-4">{item.step}</div>
                 <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-accent" />
                   {item.title}
@@ -194,10 +176,10 @@ const Index = () => {
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-primary-foreground">
             Ready to Start Your Crypto Staking Journey?
           </h2>
-            <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-              Join EasyStaking today and enjoy guaranteed weekly rewards. 
-              Your capital + earnings are automatically returned after 48 weeks.
-            </p>
+          <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
+            Join EasyStaking today and enjoy guaranteed weekly rewards. 
+            Your capital + earnings are automatically returned after 48 weeks.
+          </p>
           <Button
             size="lg"
             onClick={() => navigate("/auth")}
@@ -224,7 +206,7 @@ const Index = () => {
                 Secure crypto staking platform based in Fordwich, England
               </p>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
@@ -233,23 +215,30 @@ const Index = () => {
                 <li><a href="/dashboard" className="hover:text-primary transition-colors">Dashboard</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Follow Us</h3>
               <div className="flex gap-4">
-                <a href="https://twitter.com/easystaking" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                <a href="https://x.com/easystaking_?t=o1_QvJgFwhV5TJpzV6cqdA&s=09" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  {/* Twitter/X Icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-6 h-6 text-muted-foreground hover:text-primary"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>
                 </a>
-                <a href="https://t.me/easystaking" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                <a href="https://www.instagram.com/easystaking?igsh=MXFsaThoejBsYnVkMA==" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  {/* Instagram Icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-6 h-6 text-muted-foreground hover:text-primary"><path d="M12 2.2c3.2 0 3.584.012 4.85.07 1.17.055 1.96.24 2.416.4a4.92 4.92 0 0 1 1.78 1.17 4.92 4.92 0 0 1 1.17 1.78c.16.456.345 1.246.4 2.416.058 1.266.07 1.65.07 4.85s-.012 3.584-.07 4.85c-.055 1.17-.24 1.96-.4 2.416a4.92 4.92 0 0 1-1.17 1.78 4.92 4.92 0 0 1-1.78 1.17c-.456.16-1.246.345-2.416.4-1.266.058-1.65.07-4.85.07s-3.584-.012-4.85-.07c-1.17-.055-1.96-.24-2.416-.4a4.92 4.92 0 0 1-1.78-1.17 4.92 4.92 0 0 1-1.17-1.78c-.16-.456-.345-1.246-.4-2.416C2.212 15.584 2.2 15.2 2.2 12s.012-3.584.07-4.85c.055-1.17.24-1.96.4-2.416a4.92 4.92 0 0 1 1.17-1.78A4.92 4.92 0 0 1 5.62 2.67c.456-.16 1.246-.345 2.416-.4C8.416 2.212 8.8 2.2 12 2.2zm0 1.8c-3.173 0-3.556.012-4.813.07-1.046.05-1.613.216-1.99.36a3.12 3.12 0 0 0-1.13.74 3.12 3.12 0 0 0-.74 1.13c-.144.377-.31.944-.36 1.99-.058 1.257-.07 1.64-.07 4.813s.012 3.556.07 4.813c.05 1.046.216 1.613.36 1.99.17.441.4.814.74 1.13.33.33.689.57 1.13.74.377.144.944.31 1.99.36 1.257.058 1.64.07 4.813.07s3.556-.012 4.813-.07c1.046-.05 1.613-.216 1.99-.36a3.12 3.12 0 0 0 1.13-.74 3.12 3.12 0 0 0 .74-1.13c.144-.377.31-.944.36-1.99.058-1.257.07-1.64.07-4.813s-.012-3.556-.07-4.813c-.05-1.046-.216-1.613-.36-1.99a3.12 3.12 0 0 0-.74-1.13 3.12 3.12 0 0 0-1.13-.74c-.377-.144-.944-.31-1.99-.36-1.257-.058-1.64-.07-4.813-.07zm0 4.4a5.4 5.4 0 1 1 0 10.8 5.4 5.4 0 0 1 0-10.8zm0 1.8a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2zm5.4-.9a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z"/></svg>
                 </a>
-                <a href="https://discord.gg/easystaking" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
+                <a href="https://www.facebook.com/share/14Ljqk9xf7J/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  {/* Facebook Icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-6 h-6 text-muted-foreground hover:text-primary"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.988H7.898v-2.89h2.54V9.845c0-2.507 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.772-1.63 1.562v1.875h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
+                </a>
+                <a href="https://whatsapp.com/channel/0029VbBxTWRF6smqSp3SCp3d" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  {/* WhatsApp Icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-6 h-6 text-muted-foreground hover:text-primary"><path d="M20.52 3.48a11.85 11.85 0 0 0-16.74 0c-4.61 4.61-4.61 12.09 0 16.7l-1.92 5.6 5.8-1.92a11.85 11.85 0 0 0 16.76-16.76zm-9.06 17.22a9.4 9.4 0 1 1 9.4-9.4 9.41 9.41 0 0 1-9.4 9.4zm5.19-6.48c-.28-.14-1.65-.82-1.9-.91s-.44-.14-.62.14-.71.91-.87 1.09-.32.21-.6.07a8.2 8.2 0 0 1-2.42-1.48 9.12 9.12 0 0 1-1.68-2.07c-.17-.28 0-.43.12-.57.13-.14.28-.32.42-.48s.18-.28.28-.47a.8.8 0 0 0 .14-.45.46.46 0 0 0-.87-.32 2.61 2.61 0 0 1-.74 1.38c-.13.14-.28.32-.4.48s-.38.43-.64.64c-.26.21-.47.28-.71.43s-.57.32-.86.48a.77.77 0 0 0-.32.28 1.42 1.42 0 0 0-.27.57 4.14 4.14 0 0 0 .18 1.57c.09.26.42.43.71.64s1.48.74 1.72.82a9.62 9.62 0 0 0 3.66.61c.28 0 1.08-.11 1.56-.45.48-.36.86-.74.99-.82s.28-.14.4-.28c.12-.14.09-.26.18-.45.09-.18.04-.32-.18-.45z"/></svg>
                 </a>
               </div>
             </div>
           </div>
-          
+
           <div className="text-center pt-8 border-t border-border">
             <p className="text-sm text-muted-foreground">
               © 2025 EasyStaking - Fordwich, England. All rights reserved.

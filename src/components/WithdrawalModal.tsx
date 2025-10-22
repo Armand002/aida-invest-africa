@@ -1,113 +1,100 @@
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDownLeft, Loader2 } from "lucide-react";
 
 interface WithdrawalModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  availableBalance: number;
-  lockedBalance: number;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
-export const WithdrawalModal = ({
-  open,
-  onOpenChange,
-  availableBalance,
-  lockedBalance,
-  onSuccess,
-}: WithdrawalModalProps) => {
-  const [amount, setAmount] = useState("");
-  const [loading, setLoading] = useState(false);
+export function WithdrawalModal({ open, onOpenChange, onSuccess }: WithdrawalModalProps) {
   const { toast } = useToast();
+  const [amount, setAmount] = useState("");
+  const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [maxWithdrawable, setMaxWithdrawable] = useState(0);
+
+  useEffect(() => {
+    if (!open) return;
+    const fetchWithdrawable = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Fetch all balances in parallel
+        const [investmentsRes, profileRes, commissionsRes] = await Promise.all([
+          supabase.from("user_investments").select("total_earned").eq("user_id", user.id),
+          supabase.from("profiles").select("released_capital").eq("id", user.id).single(),
+          supabase.from("referral_commissions").select("amount").eq("referrer_id", user.id),
+        ]);
+
+        const totalEarned = investmentsRes.data?.reduce((sum, inv) => sum + Number(inv.total_earned), 0) || 0;
+        const totalCommissions = commissionsRes.data?.reduce((sum, c) => sum + Number(c.amount), 0) || 0;
+        const releasedCapital = Number(profileRes.data?.released_capital || 0);
+
+        setMaxWithdrawable(totalEarned + totalCommissions + releasedCapital);
+      } catch (err) {
+        console.error("Error fetching withdrawable balance:", err);
+        setMaxWithdrawable(0);
+      }
+    };
+    fetchWithdrawable();
+  }, [open]);
 
   const handleWithdraw = async () => {
-    const withdrawAmount = parseFloat(amount);
-
-    // Validation
-    if (!withdrawAmount || isNaN(withdrawAmount)) {
-      toast({
-        title: "Invalid amount",
-        description: "Please enter a valid amount",
-        variant: "destructive",
-      });
+    if (!amount || !address) {
+      toast({ title: "Missing information", description: "Please enter amount and address.", variant: "destructive" });
       return;
     }
 
-    if (withdrawAmount < 1) {
-      toast({
-        title: "Minimum withdrawal",
-        description: "Minimum withdrawal amount is $1",
-        variant: "destructive",
-      });
+    const amountNum = Number(amount);
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      toast({ title: "Invalid amount", description: "Please enter a valid number.", variant: "destructive" });
       return;
     }
 
-    if (withdrawAmount > availableBalance) {
-      toast({
-        title: "Insufficient balance",
-        description: "You don't have enough available balance",
-        variant: "destructive",
-      });
+    if (amountNum > maxWithdrawable) {
+      toast({ title: "Insufficient balance", description: "Amount exceeds available balance.", variant: "destructive" });
+      return;
+    }
+
+    // ✅ Only BEP20 addresses allowed (USDT.BEP20)
+    const bep20Regex = /^0x[a-fA-F0-9]{40}$/;
+    if (!bep20Regex.test(address)) {
+      toast({ title: "Invalid address", description: "Enter a valid USDT.BEP20 address.", variant: "destructive" });
       return;
     }
 
     setLoading(true);
-
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const sessionRes = await supabase.auth.getSession();
+      const jwt = sessionRes.data?.session?.access_token;
+      if (!jwt) throw new Error("User not authenticated");
 
-      // Deduct from wallet
-      const { error: walletError } = await supabase
-        .from("profiles")
-        .update({
-          wallet_balance: availableBalance - withdrawAmount,
-        })
-        .eq("id", user.id);
-
-      if (walletError) throw walletError;
-
-      // Create withdrawal transaction
-      const { error: txError } = await supabase
-        .from("wallet_transactions")
-        .insert({
-          user_id: user.id,
-          type: "withdrawal",
-          amount: withdrawAmount,
-          status: "pending",
-          notes: "Withdrawal request initiated",
-        });
-
-      if (txError) throw txError;
-
-      toast({
-        title: "Withdrawal initiated",
-        description: `Your withdrawal of $${withdrawAmount.toFixed(2)} is being processed`,
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_FUNCTION_URL}/request-withdrawal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwt}` },
+        body: JSON.stringify({ amount: amountNum, address, network: "BEP20" }), // Locked to BEP20
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Withdrawal failed");
+      }
+
+      await response.json();
+      toast({ title: "Withdrawal Requested", description: "Your USDT.BEP20 withdrawal request is being processed." });
 
       setAmount("");
+      setAddress("");
       onOpenChange(false);
-      onSuccess();
-    } catch (error: any) {
-      console.error("Withdrawal error:", error);
-      toast({
-        title: "Withdrawal failed",
-        description: error.message || "An error occurred during withdrawal",
-        variant: "destructive",
-      });
+      if (onSuccess) onSuccess();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to submit withdrawal.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -115,113 +102,46 @@ export const WithdrawalModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ArrowDownLeft className="w-5 h-5 text-accent" />
-            Withdraw Funds
-          </DialogTitle>
-          <DialogDescription>
-            Withdraw available funds from your wallet. Minimum $1.
-          </DialogDescription>
+          <DialogTitle>Withdraw Funds</DialogTitle>
         </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Available to withdraw: <span className="font-semibold">${maxWithdrawable.toFixed(2)}</span>
+          </p>
 
-        <div className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Available Balance</p>
-              <p className="text-lg font-bold text-accent">
-                ${availableBalance.toFixed(2)}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Locked in Contracts</p>
-              <p className="text-lg font-bold text-muted-foreground">
-                ${lockedBalance.toFixed(2)}
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="amount">Withdrawal Amount ($)</Label>
-            <Input
-              id="amount"
-              type="number"
-              placeholder="Enter amount"
-              min="1"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              disabled={loading}
-            />
-            <p className="text-xs text-muted-foreground">
-              Minimum withdrawal: $1.00
-            </p>
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAmount((availableBalance * 0.25).toFixed(2))}
-              disabled={loading}
-            >
-              25%
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAmount((availableBalance * 0.5).toFixed(2))}
-              disabled={loading}
-            >
-              50%
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAmount((availableBalance * 0.75).toFixed(2))}
-              disabled={loading}
-            >
-              75%
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAmount(availableBalance.toFixed(2))}
-              disabled={loading}
-            >
-              Max
-            </Button>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
+          <Input
+            type="number"
+            placeholder="Amount (USDT)"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            max={maxWithdrawable}
             disabled={loading}
-          >
-            Cancel
-          </Button>
+          />
+
+          <Input
+            type="text"
+            placeholder="Wallet address (USDT.BEP20)"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            disabled={loading}
+          />
+
+          {/* Network selector removed — only BEP20 allowed */}
+          <div className="text-sm font-medium text-muted-foreground">
+            Network: <span className="font-semibold">USDT.BEP20</span>
+          </div>
+
           <Button
+            className="w-full gradient-gold text-primary font-semibold shadow-gold"
             onClick={handleWithdraw}
-            disabled={loading}
-            className="gradient-gold text-primary font-semibold shadow-gold"
+            disabled={loading || maxWithdrawable <= 0}
           >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <ArrowDownLeft className="w-4 h-4 mr-2" />
-                Withdraw
-              </>
-            )}
+            {loading ? "Processing..." : "Confirm Withdrawal"}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
-};
+}

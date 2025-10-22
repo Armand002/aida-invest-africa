@@ -62,6 +62,8 @@ interface Transaction {
   currency: string;
   metadata: any;
   created_at: string;
+  status: string;
+  notes?: string;
 }
 
 const Dashboard = () => {
@@ -71,7 +73,7 @@ const Dashboard = () => {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [referralCommissions, setReferralCommissions] = useState<ReferralCommission[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
 
@@ -196,7 +198,6 @@ const Dashboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Wallet realtime
       const profileSub = supabase
         .channel(`realtime-profile-${user.id}`)
         .on(
@@ -206,7 +207,6 @@ const Dashboard = () => {
         )
         .subscribe();
 
-      // Transactions realtime
       const txSub = supabase
         .channel(`realtime-transactions-${user.id}`)
         .on(
@@ -221,7 +221,6 @@ const Dashboard = () => {
         supabase.removeChannel(txSub);
       };
     };
-
     setupRealtime();
   }, []);
 
@@ -240,16 +239,9 @@ const Dashboard = () => {
   const totalInvested = investments.reduce((sum, inv) => sum + Number(inv.investment_amount), 0);
   const totalEarned = investments.reduce((sum, inv) => sum + Number(inv.total_earned), 0);
   const activeInvestments = investments.filter((inv) => inv.status === "active").length;
-  
-  // Calculate locked balance (capital in active investments)
-  const lockedBalance = investments
-    .filter((inv) => inv.status === "active")
-    .reduce((sum, inv) => sum + Number(inv.investment_amount), 0);
-  
+  const lockedBalance = investments.filter((inv) => inv.status === "active").reduce((sum, inv) => sum + Number(inv.investment_amount), 0);
   const availableBalance = Number(profile?.wallet_balance || 0);
   const releasedCapital = Number(profile?.released_capital || 0);
-  
-  // Withdrawable balance = total earned + referral commissions + released capital
   const withdrawableBalance = totalEarned + totalReferralEarnings + releasedCapital;
 
   if (loading) {
@@ -266,19 +258,75 @@ const Dashboard = () => {
     );
   }
 
+  // -------------------- Sub-components --------------------
+  const ScrollSection = ({ children }: { children: React.ReactNode }) => (
+    <div className="max-h-[500px] overflow-y-auto pr-2">{children}</div>
+  );
+
+  const TransactionList = ({ items, emptyLabel }: { items: any[]; emptyLabel: string }) => (
+    <ScrollSection>
+      {items.length === 0 ? (
+        <Card className="shadow-soft">
+          <CardContent className="py-12 text-center">
+            <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">{emptyLabel}</h3>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {items.map((tx) => (
+            <Card key={tx.id} className="shadow-soft">
+              <CardContent className="py-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="font-medium">
+                      {tx.type.charAt(0).toUpperCase() + tx.type.slice(1).replace("_", " ")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(tx.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <Badge variant={tx.status === "completed" ? "default" : "secondary"}>{tx.status}</Badge>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Amount</p>
+                    <p className="text-lg font-bold">
+                      {tx.type === "deposit" || tx.type === "referral_commission" || tx.type === "payout"
+                        ? "+"
+                        : "-"}
+                      ${Number(tx.amount).toFixed(2)}
+                    </p>
+                  </div>
+                  {tx.notes && <p className="text-xs text-muted-foreground max-w-xs text-right">{tx.notes}</p>}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </ScrollSection>
+  );
+
+  const roiTx = transactions.filter((tx) => tx.type === "return");
+  const deposits = transactions.filter((tx) => tx.type === "deposit");
+  const withdrawals = transactions.filter((tx) => tx.type === "withdrawal");
+  const investmentTx = transactions.filter((tx) => tx.type === "investment");
+
+  // -------------------- Render --------------------
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
-        {/* -------------------- Wallet & Stats -------------------- */}
+        {/* ---- HEADER ---- */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome, {profile?.full_name || "Staker"}
-          </h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome, {profile?.full_name || "Staker"}</h1>
           <p className="text-muted-foreground">Manage your staking positions and track your rewards</p>
         </div>
 
+        {/* ---- BALANCES ---- */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          {/* Wallet */}
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Wallet Balance</CardTitle>
@@ -286,19 +334,14 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${availableBalance.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Locked: ${lockedBalance.toFixed(2)}
-              </p>
-              <Button
-                size="sm"
-                className="gradient-gold text-primary font-semibold shadow-gold w-full mt-3"
-                onClick={() => navigate("/deposit")}
-              >
+              <p className="text-xs text-muted-foreground mt-1">Locked: ${lockedBalance.toFixed(2)}</p>
+              <Button size="sm" className="gradient-gold text-primary font-semibold shadow-gold w-full mt-3" onClick={() => navigate("/deposit")}>
                 <Plus className="w-4 h-4 mr-1" /> Deposit
               </Button>
             </CardContent>
           </Card>
 
+          {/* Total staked */}
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Staked</CardTitle>
@@ -312,6 +355,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
+          {/* Earnings */}
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Earned</CardTitle>
@@ -319,24 +363,15 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-accent">${totalEarned.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Commissions: ${totalReferralEarnings.toFixed(2)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Released Capital: ${releasedCapital.toFixed(2)}
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-3 w-full"
-                onClick={() => setWithdrawalOpen(true)}
-                disabled={withdrawableBalance < 1}
-              >
+              <p className="text-xs text-muted-foreground mt-1">Commissions: ${totalReferralEarnings.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Released Capital: ${releasedCapital.toFixed(2)}</p>
+              <Button size="sm" variant="outline" className="mt-3 w-full" onClick={() => setWithdrawalOpen(true)} disabled={withdrawableBalance < 1}>
                 <ArrowDownLeft className="w-4 h-4 mr-1" /> Withdraw
               </Button>
             </CardContent>
           </Card>
 
+          {/* Active */}
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Positions</CardTitle>
@@ -344,19 +379,14 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{activeInvestments}</div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-3"
-                onClick={() => navigate("/packs")}
-              >
+              <Button size="sm" variant="outline" className="mt-3" onClick={() => navigate("/packs")}>
                 View Packs
               </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* -------------------- Referral Program -------------------- */}
+        {/* ---- REFERRAL PROGRAM ---- */}
         <Card className="shadow-soft mb-8 border-accent/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -379,9 +409,7 @@ const Dashboard = () => {
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Commission Rate</p>
-                <div className="text-2xl font-bold text-accent">
-                  {profile?.referral_level || 5}%
-                </div>
+                <div className="text-2xl font-bold text-accent">{profile?.referral_level || 5}%</div>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Total Earned</p>
@@ -392,7 +420,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* -------------------- Tabs -------------------- */}
+        {/* ---- MAIN TABS ---- */}
         <Tabs defaultValue="investments" className="space-y-4">
           <TabsList>
             <TabsTrigger value="investments">My Positions</TabsTrigger>
@@ -401,192 +429,153 @@ const Dashboard = () => {
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
           </TabsList>
 
-          {/* Investments */}
-          <TabsContent value="investments" className="space-y-4">
-            {investments.length === 0 ? (
-              <Card className="shadow-soft">
-                <CardContent className="py-12 text-center">
-                  <TrendingUp className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No Active Staking Positions</h3>
-                  <p className="text-muted-foreground mb-4">Start staking today and receive weekly rewards</p>
-                  <Button onClick={() => navigate("/packs")} className="gradient-gold text-primary font-semibold shadow-gold">
-                    Discover Packs
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {investments.map((inv) => (
-                  <Card key={inv.id} className="shadow-soft">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-lg">Pack {inv.investment_packs.name}</CardTitle>
-                          <CardDescription>Week {inv.current_week} / 48</CardDescription>
+          {/* ---- Investments ---- */}
+          <TabsContent value="investments">
+            <ScrollSection>
+              {investments.length === 0 ? (
+                <Card className="shadow-soft">
+                  <CardContent className="py-12 text-center">
+                    <TrendingUp className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold mb-2">No active investments</h3>
+                    <p className="text-muted-foreground mb-4">Start earning passive income today.</p>
+                    <Button onClick={() => navigate("/packs")}>View Investment Packs</Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {investments.map((inv) => (
+                    <Card key={inv.id} className="shadow-soft border-border">
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>{inv.investment_packs.name}</span>
+                          <Badge variant={inv.status === "active" ? "default" : "secondary"}>
+                            {inv.status}
+                          </Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2 text-sm">
+                          <p>Amount: <strong>${inv.investment_amount.toFixed(2)}</strong></p>
+                          <p>Weekly Return: <strong>${inv.weekly_return.toFixed(2)}</strong></p>
+                          <p>Total Earned: <strong>${inv.total_earned.toFixed(2)}</strong></p>
+                          <p>Week: {inv.current_week}/48</p>
                         </div>
-                        <Badge variant={inv.status === "active" ? "default" : "secondary"}>
-                          {inv.status === "active" ? "Active" : "Completed"}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground mb-1">Staked Amount</p>
-                          <p className="font-semibold">${Number(inv.investment_amount).toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground mb-1">Weekly Rewards</p>
-                          <p className="font-semibold text-accent">${Number(inv.weekly_return).toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground mb-1">Total Rewards</p>
-                          <p className="font-semibold text-accent">${Number(inv.total_earned).toFixed(2)}</p>
-                        </div>
-                      </div>
-                      <div className="mt-4 bg-muted rounded-full h-2 overflow-hidden">
-                        <div className="h-full gradient-gold transition-all duration-500"
-                          style={{ width: `${(inv.current_week / 48) * 100}%` }} />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </ScrollSection>
           </TabsContent>
 
-          {/* My Referrals */}
-          <TabsContent value="my-referrals" className="space-y-4">
-            {referrals.length === 0 ? (
-              <Card className="shadow-soft">
-                <CardContent className="py-12 text-center">
-                  <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No Referrals Yet</h3>
-                  <p className="text-muted-foreground mb-4">Share your referral code to start building your network</p>
-                  <Button onClick={copyReferralCode} className="gradient-gold text-primary font-semibold shadow-gold">
-                    Copy Referral Code
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {referrals.map((ref) => (
-                  <Card key={ref.id} className="shadow-soft">
-                    <CardContent className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">{ref.full_name}</p>
-                        <p className="text-sm text-muted-foreground">{ref.email}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Joined: {new Date(ref.created_at).toLocaleDateString()}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground mb-1">Total Invested</p>
-                        <p className="text-lg font-bold">${ref.total_invested.toFixed(2)}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+          {/* ---- My Referrals ---- */}
+          <TabsContent value="my-referrals">
+            <ScrollSection>
+              {referrals.length === 0 ? (
+                <Card className="shadow-soft">
+                  <CardContent className="py-12 text-center">
+                    <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold mb-2">No referrals yet</h3>
+                    <p className="text-muted-foreground">Share your referral code to start earning commissions.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {referrals.map((ref) => (
+                    <Card key={ref.id} className="shadow-soft">
+                      <CardHeader>
+                        <CardTitle className="flex justify-between items-center">
+                          {ref.full_name}
+                          <Badge variant="secondary">${ref.total_invested.toFixed(2)}</Badge>
+                        </CardTitle>
+                        <CardDescription>{ref.email}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground">
+                          Joined {new Date(ref.created_at).toLocaleDateString()}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </ScrollSection>
           </TabsContent>
 
-          {/* Referral Commissions */}
-          <TabsContent value="referrals" className="space-y-4">
-            {referralCommissions.length === 0 ? (
-              <Card className="shadow-soft">
-                <CardContent className="py-12 text-center">
-                  <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No Commissions Yet</h3>
-                  <p className="text-muted-foreground mb-4">You'll earn commissions when your referrals invest</p>
-                  <Button onClick={copyReferralCode} className="gradient-gold text-primary font-semibold shadow-gold">
-                    Copy Referral Code
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {referralCommissions.map((comm) => (
-                  <Card key={comm.id} className="shadow-soft">
-                    <CardContent className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">{comm.profiles?.full_name || "User"}</p>
-                        <p className="text-sm text-muted-foreground">{comm.profiles?.email}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{new Date(comm.created_at).toLocaleDateString()}</p>
-                      </div>
-                      <div className="text-right flex flex-col items-end">
-                        <div className="flex items-center gap-2 text-green-600">
-                          <ArrowUpRight className="w-4 h-4" />
-                          <span className="font-bold">+${Number(comm.amount).toFixed(2)}</span>
+          {/* ---- Commissions ---- */}
+          <TabsContent value="referrals">
+            <ScrollSection>
+              {referralCommissions.length === 0 ? (
+                <Card className="shadow-soft">
+                  <CardContent className="py-12 text-center">
+                    <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold mb-2">No commissions earned yet</h3>
+                    <p className="text-muted-foreground">Invite your friends to earn commissions.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {referralCommissions.map((comm) => (
+                    <Card key={comm.id} className="shadow-soft">
+                      <CardContent className="py-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">{comm.profiles.full_name}</p>
+                            <p className="text-xs text-muted-foreground">{comm.profiles.email}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-accent">
+                              +${comm.amount.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{comm.percentage}% commission</p>
+                          </div>
                         </div>
-                        <Badge variant="secondary" className="mt-1">{comm.percentage}% commission</Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {new Date(comm.created_at).toLocaleString()}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </ScrollSection>
           </TabsContent>
 
-          {/* Transactions */}
+          {/* ---- Transactions ---- */}
           <TabsContent value="transactions">
-            {transactions.length === 0 ? (
-              <Card className="shadow-soft">
-                <CardContent className="py-12 text-center">
-                  <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No Transactions Yet</h3>
-                  <p className="text-muted-foreground">All deposits and withdrawals will appear here.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {transactions.map((tx) => (
-                  <Card key={tx.id} className="shadow-soft">
-                    <CardContent className="py-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <p className="font-medium">{tx.type.charAt(0).toUpperCase() + tx.type.slice(1).replace("_", " ")}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(tx.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                        <Badge variant={tx.status === "completed" ? "default" : "secondary"}>
-                          {tx.status}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between items-end">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Amount</p>
-                          <p className="text-lg font-bold">
-                            {tx.type === "deposit" || tx.type === "referral_commission" || tx.type === "payout" ? "+" : "-"}
-                            ${Number(tx.amount).toFixed(2)}
-                          </p>
-                        </div>
-                        {tx.notes && (
-                          <p className="text-xs text-muted-foreground max-w-xs text-right">
-                            {tx.notes}
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            <Tabs defaultValue="all" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="roi">ROI</TabsTrigger>
+                <TabsTrigger value="deposit">Deposits</TabsTrigger>
+                <TabsTrigger value="withdrawal">Withdrawals</TabsTrigger>
+                <TabsTrigger value="investment">Investments</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="all">
+                <TransactionList items={transactions} emptyLabel="No transactions yet" />
+              </TabsContent>
+
+              <TabsContent value="deposit">
+                <TransactionList items={deposits} emptyLabel="No deposits found" />
+              </TabsContent>
+
+              <TabsContent value="withdrawal">
+                <TransactionList items={withdrawals} emptyLabel="No withdrawals yet" />
+              </TabsContent>
+
+              <TabsContent value="investment">
+                <TransactionList items={investmentTx} emptyLabel="No investment transactions" />
+              </TabsContent>
+
+              <TabsContent value="roi">
+                <TransactionList items={roiTx} emptyLabel="No ROI transactions yet" />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </div>
-
-      <WithdrawalModal
-        open={withdrawalOpen}
-        onOpenChange={setWithdrawalOpen}
-        availableBalance={withdrawableBalance}
-        lockedBalance={0}
-        onSuccess={() => {
-          fetchProfile();
-          fetchInvestments();
-          fetchReferralCommissions();
-          fetchTransactions();
-        }}
-      />
+      <WithdrawalModal open={withdrawalOpen} onOpenChange={setWithdrawalOpen} />
     </div>
   );
 };
