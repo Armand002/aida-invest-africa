@@ -125,6 +125,7 @@ const Packs = () => {
 
     if (investError) {
       // Rollback
+      console.error("Supabase insert error:", investError);
       await supabase
         .from("profiles")
         .update({ wallet_balance: profile.wallet_balance })
