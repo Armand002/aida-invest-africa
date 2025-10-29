@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Packs from "./pages/Packs";
 import DepositPage  from "./pages/deposit";
 import NotFound from "./pages/NotFound";
+import UpdatePassword from "./pages/UpdatePassword"; // <--- NOUVEAU IMPORT
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/deposit" element={<DepositPage  />} />
           <Route path="/packs" element={<Packs />} />
+          <Route path="/update-password" element={<UpdatePassword />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -155,7 +155,13 @@ const Packs = () => {
     });
 
     setInvesting(null);
-    navigate("/dashboard");
+
+    // 🌟 CORRECTION APPLIQUÉE ICI 🌟
+    // Le délai permet à React de terminer la manipulation du DOM (affichage du toast) 
+    // avant que le composant ne soit démonté par la navigation.
+    setTimeout(() => {
+        navigate("/dashboard");
+    }, 300); 
   };
 
   const getPackTier = (index: number) => {
