@@ -57,7 +57,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full mb-6 shadow-soft">
               <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-              <span className="text-sm font-medium">Secure  staking platform</span>
+              <span className="text-sm font-medium">Secure crypto staking platform</span>
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-primary-foreground">
